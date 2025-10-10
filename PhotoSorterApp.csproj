@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+		<PackageReference Include="MetadataExtractor" Version="2.8.1" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+				<PackageReference Include="ModernWpfUI" Version="0.9.6" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,179 @@
+﻿<Window x:Class="PhotoSorterApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:PhotoSorterApp.ViewModels"
+        Title="PhotoSorter" Height="700" Width="900" FontFamily="Segoe UI">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Меню -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="Файл">
+                <MenuItem Header="Выход" Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="Справка">
+                <MenuItem Header="О программе" Click="About_Click"/>
+                <MenuItem Header="Поддерживаемые форматы" Click="Formats_Click"/>
+                <MenuItem Header="Полная справка" Click="FullHelp_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Вкладки -->
+        <TabControl Grid.Row="1" Margin="10" Background="White">
+            <!-- Сортировка -->
+            <TabItem Header="Сортировка">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Button Content="Выбрать папку" Click="SelectFolder_Click" 
+                            Width="150" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+
+                    <TextBlock Grid.Row="1" Text="{Binding SortingOptions.SourceFolder}" 
+                               TextWrapping="Wrap" Margin="0,5,0,0"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox Content="Рекурсивно" IsChecked="{Binding SortingOptions.IsRecursive}" 
+                                  Margin="0,0,20,0"/>
+                        <CheckBox Content="По месяцам" IsChecked="{Binding SortingOptions.SplitByMonth}" 
+                                  Margin="0,0,20,0"/>
+                        <CheckBox Content="Бэкап" IsChecked="{Binding SortingOptions.CreateBackup}" 
+                                  Margin="0,0,20,0"/>
+                        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" 
+                                  MinWidth="120" Margin="0,0,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Старт" Click="StartProcess_Click" Padding="10,5" Margin="0,0,10,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox Content="Только сортировка" IsChecked="{Binding IsSortOnly}" Margin="0,0,20,0"/>
+                        <CheckBox Content="Сортировка + дубликаты" IsChecked="{Binding IsSortAndDuplicates}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Дубликаты -->
+            <TabItem Header="Дубликаты">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Выбрать папку" Click="SelectDuplicatesFolder_Click" 
+                                Width="150" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding DuplicatesSearchFolder}" VerticalAlignment="Center" 
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <CheckBox Grid.Row="1" Content="Рекурсивно" IsChecked="{Binding IsDuplicatesRecursive}" 
+                              Margin="0,10,0,0"/>
+
+                    <Button Grid.Row="2" Content="Найти дубликаты" Click="FindDuplicates_Click" 
+                            Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Очистка -->
+            <TabItem Header="Очистка">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Выбрать папку" Click="SelectCleanupFolder_Click" 
+                                Width="150" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding CleanupFolder}" VerticalAlignment="Center" 
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <CheckBox Grid.Row="1" Content="Рекурсивно" IsChecked="{Binding CleanupRecursive}" 
+                              Margin="0,10,0,0"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox Content="Скриншоты" IsChecked="{Binding CleanupScreenshots}" Margin="0,0,20,0"/>
+                        <CheckBox Content="Временные файлы" IsChecked="{Binding CleanupTempFiles}" Margin="0,0,20,0"/>
+                        <CheckBox Content="Пустые файлы" IsChecked="{Binding CleanupEmptyFiles}" Margin="0,0,20,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Row="3" Content="Старт очистки" Click="StartCleanup_Click" 
+                            Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Переименование -->
+            <TabItem Header="Переименование">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Выбрать папку" Click="SelectRenameFolder_Click" 
+                                Width="150" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding RenameFolder}" VerticalAlignment="Center" 
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <CheckBox Grid.Row="1" Content="Рекурсивно" IsChecked="{Binding IsRenameRecursive}" 
+                              Margin="0,10,0,0"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="Шаблон:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox Text="{Binding RenamePattern}" Width="300" Margin="0,0,10,0"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="Подсказка: {date}, {year}, {month}, {day}, {name}, {index}" 
+                               FontStyle="Italic" Foreground="#666" Margin="0,5,0,0"/>
+
+                    <Button Grid.Row="4" Content="Применить" Click="ApplyRename_Click" 
+                            Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Лог -->
+        <Grid Grid.Row="2" Margin="10,0,10,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="100"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Журнал:" FontWeight="Bold"/>
+            <ScrollViewer Grid.Row="1" x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Logger}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Message}" Foreground="{Binding Color}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
