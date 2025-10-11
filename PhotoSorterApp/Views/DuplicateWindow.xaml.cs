@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace PhotoSorterApp.Views;
 
@@ -65,6 +67,7 @@ public partial class DuplicateWindow : Window
         Close();
     }
 
+
     private void ProcessFiles()
     {
         var context = (dynamic)DataContext;
@@ -118,11 +121,34 @@ public class FileItem : INotifyPropertyChanged
     {
         get
         {
-            try { return $"{new FileInfo(FilePath).Length / 1024} КБ"; }
-            catch { return "—"; }
+            try
+            {
+                var size = new FileInfo(FilePath).Length;
+                return size switch
+                {
+                    < 1024 => $"{size} Б",
+                    < 1024 * 1024 => $"{size / 1024} КБ",
+                    _ => $"{size / (1024 * 1024)} МБ"
+                };
+            }
+            catch
+            {
+                return "—";
+            }
         }
     }
 
+    private void ShowInExplorer_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.DataContext is FileItem file)
+        {
+            if (File.Exists(file.FilePath))
+            {
+                var arg = $"/select,\"{file.FilePath}\"";
+                Process.Start("explorer.exe", arg);
+            }
+        }
+    }
     private bool _isSelected;
     public bool IsSelected
     {

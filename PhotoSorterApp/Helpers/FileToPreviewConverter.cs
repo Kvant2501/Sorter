@@ -1,6 +1,5 @@
 ﻿using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
@@ -33,7 +32,8 @@ public class FileToPreviewConverter : IValueConverter
             image.Mutate(x => x.AutoOrient().Resize(80, 60));
 
             var memoryStream = new MemoryStream();
-            image.SaveAsJpeg(memoryStream);
+            image.SaveAsPng(memoryStream);
+            memoryStream.Seek(0, SeekOrigin.Begin);
 
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
@@ -44,8 +44,10 @@ public class FileToPreviewConverter : IValueConverter
 
             return bitmap;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ Ошибка превью для: {filePath}");
+            System.Diagnostics.Debug.WriteLine($"   {ex.Message}");
             return null;
         }
     }

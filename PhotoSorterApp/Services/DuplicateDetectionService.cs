@@ -37,7 +37,7 @@ public class DuplicateDetectionService
                     hashGroups[hashStr] = new List<string>();
                 hashGroups[hashStr].Add(file);
             }
-            catch (Exception ex)
+            catch 
             {
                 // Пропускаем файлы, которые нельзя прочитать
                 continue;
