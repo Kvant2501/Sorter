@@ -1,4 +1,6 @@
 ﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
@@ -38,14 +40,12 @@ public class FileToPreviewConverter : IValueConverter
             bitmap.StreamSource = memoryStream;
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.EndInit();
-            bitmap.Freeze(); // ← важно для многопоточности
+            bitmap.Freeze();
 
             return bitmap;
         }
-        catch (Exception ex)
+        catch
         {
-            // Логируем ошибку, но не ломаем UI
-            System.Diagnostics.Debug.WriteLine($"Ошибка превью для {filePath}: {ex.Message}");
             return null;
         }
     }
