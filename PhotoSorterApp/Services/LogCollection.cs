@@ -1,4 +1,7 @@
-﻿// Services/LogCollection.cs
+﻿using System.Collections.ObjectModel;
+using System.Windows.Media;
+#nullable disable
+
 namespace PhotoSorterApp.Services;
 
 public enum LogLevel
@@ -11,24 +14,27 @@ public enum LogLevel
 public class LogEntry
 {
     public string Message { get; set; }
-    public System.Windows.Media.Brush Color { get; set; }
+    public Brush Color { get; set; }
+    public string Icon { get; set; }
 
-    public LogEntry(string message, LogLevel level = LogLevel.Info)
+    public LogEntry(string message, LogLevel level = LogLevel.Info, string icon = "✅")
     {
         Message = message;
+        Icon = icon;
         Color = level switch
         {
-            LogLevel.Warning => System.Windows.Media.Brushes.Orange,
-            LogLevel.Error => System.Windows.Media.Brushes.Red,
-            _ => System.Windows.Media.Brushes.Black
+            LogLevel.Warning => Brushes.Orange,
+            LogLevel.Error => Brushes.Red,
+            _ => Brushes.Black
         };
     }
 }
 
-public class LogCollection : System.Collections.ObjectModel.ObservableCollection<LogEntry>
+// ВАЖНО: наследуемся от ObservableCollection!
+public class LogCollection : ObservableCollection<LogEntry>
 {
-    public void Log(string message, LogLevel level = LogLevel.Info)
+    public void Log(string message, LogLevel level = LogLevel.Info, string icon = "✅")
     {
-        Add(new LogEntry(message, level));
+        Add(new LogEntry(message, level, icon));
     }
 }

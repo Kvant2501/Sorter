@@ -8,12 +8,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 #nullable disable
 
 namespace PhotoSorterApp;
@@ -25,15 +23,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        if (DataContext is MainViewModel vm)
-        {
-            vm.Logger.CollectionChanged += (s, e) =>
-            {
-                LogScrollViewer?.ScrollToBottom();
-            };
-        }
+        
     }
-
+   
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
@@ -56,12 +48,13 @@ public partial class MainWindow : Window
                 CreateBackup = vm.SortingOptions.CreateBackup
             };
 
-            vm.Logger.Log($"Выбрана папка: {dialog.FolderName}");
+            vm.Logger.Log($"📁 Выбрана папка: {dialog.FolderName}", LogLevel.Info, "📁");
         }
     }
 
     private async void StartProcess_Click(object sender, RoutedEventArgs e)
     {
+
         if (DataContext is not MainViewModel vm) return;
 
         if (string.IsNullOrWhiteSpace(vm.SortingOptions.SourceFolder))
@@ -91,7 +84,7 @@ public partial class MainWindow : Window
             .ToList();
         int allFilesCount = allFiles.Count;
 
-        vm.Logger.Log($"Начата сортировка по профилю '{vm.SelectedProfile}'...");
+        vm.Logger.Log($"🔄 Начата сортировка по профилю '{vm.SelectedProfile}'...", LogLevel.Info, "🔄");
         vm.IsProgressVisible = true;
         vm.ProgressValue = 0;
 
@@ -108,11 +101,11 @@ public partial class MainWindow : Window
                 movedFiles = sortingService.SortPhotos(vm.SortingOptions, vm.SelectedProfile, logProgress, progressPercent, _cts.Token);
             });
 
-            vm.Logger.Log($"✅ Сортировка завершена. Найдено файлов: {allFilesCount}, перемещено: {movedFiles}");
+            vm.Logger.Log($"✅ Сортировка завершена. Найдено файлов: {allFilesCount}, перемещено: {movedFiles}", LogLevel.Info, "✅");
         }
         catch (Exception ex)
         {
-            vm.Logger.Log($"❌ Критическая ошибка: {ex.Message}", LogLevel.Error);
+            vm.Logger.Log($"❌ Критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
             MessageBox.Show(
                 $"Ошибка при обработке папки:\n{ex.Message}\n\n" +
                 "Убедитесь, что выбрана обычная папка, а не корневой диск.",
@@ -160,12 +153,14 @@ public partial class MainWindow : Window
             MessageBox.Show("Выберите папку для поиска дубликатов.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
+      
+        vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
 
         vm.Logger.Log("Запуск поиска дубликатов...");
         var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.DuplicatesSearchFolder, vm.IsDuplicatesRecursive, vm.SelectedProfile);
         if (groups > 0)
         {
-            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}");
+            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}", LogLevel.Info, "✅");
         }
     }
 
@@ -190,7 +185,7 @@ public partial class MainWindow : Window
             MessageBox.Show("Выберите папку для очистки.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-
+        vm.Logger.Log($"🧹 Очистка папки: {vm.CleanupFolder}", LogLevel.Info, "🧹");
         var folder = vm.CleanupFolder;
         var quarantineDir = Path.Combine(folder, $"Карантин_{DateTime.Now:yyyyMMdd_HHmm}");
         Directory.CreateDirectory(quarantineDir);
@@ -232,7 +227,7 @@ public partial class MainWindow : Window
 
             if (movedCount > 0)
             {
-                vm.Logger.Log($"✅ Очистка завершена. Перемещено в Карантин: {movedCount} файлов");
+                vm.Logger.Log($"✅ Очистка завершена. Перемещено в Карантин: {movedCount} файлов", LogLevel.Info, "✅");
                 MessageBox.Show($"Перемещено файлов: {movedCount}\nКарантин: {quarantineDir}",
                               "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -244,7 +239,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            vm.Logger.Log($"❌ Ошибка очистки: {ex.Message}", LogLevel.Error);
+            vm.Logger.Log($"❌ Ошибка очистки: {ex.Message}", LogLevel.Error, "❌");
             MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -256,7 +251,7 @@ public partial class MainWindow : Window
     private void SelectRenameFolder_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog();
-        if (dialog.ShowDialog() == true && DataContext is MainViewModel vm)
+        if (dialog.ShowDialog() == true && this.DataContext is MainViewModel vm)
         {
             vm.RenameFolder = dialog.FolderName;
         }
@@ -264,7 +259,7 @@ public partial class MainWindow : Window
 
     private void ApplyRename_Click(object sender, RoutedEventArgs e)
     {
-        if (DataContext is not MainViewModel vm) return;
+        if (this.DataContext is not MainViewModel vm) return;
         if (string.IsNullOrWhiteSpace(vm.RenameFolder))
         {
             MessageBox.Show("Выберите папку для переименования.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -284,7 +279,8 @@ public partial class MainWindow : Window
             MessageBoxImage.Warning);
 
         if (result != MessageBoxResult.Yes) return;
-
+        // Добавь эту строку после проверок, перед try:
+        vm.Logger.Log($"📝 Применяю шаблон: {vm.RenamePattern} в папке: {vm.RenameFolder}", LogLevel.Info, "📝");
         try
         {
             int renamedCount = 0;
@@ -314,6 +310,12 @@ public partial class MainWindow : Window
                         .Replace("{name}", oldName)
                         .Replace("{index}", (i + 1).ToString("D4"));
 
+                    // Удаляем недопустимые символы
+                    foreach (var c in Path.GetInvalidFileNameChars())
+                    {
+                        newName = newName.Replace(c.ToString(), "_");
+                    }
+
                     var newFullPath = Path.Combine(dir, newName + ext);
 
                     if (File.Exists(newFullPath))
@@ -331,13 +333,100 @@ public partial class MainWindow : Window
                 }
             }
 
-            vm.Logger.Log($"✅ Переименование завершено. Обработано файлов: {renamedCount}");
+            vm.Logger.Log($"✅ Переименование завершено. Обработано файлов: {renamedCount}", LogLevel.Info, "✅");
             MessageBox.Show($"Переименовано файлов: {renamedCount}", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            vm.Logger.Log($"❌ Ошибка переименования: {ex.Message}", LogLevel.Error);
+            vm.Logger.Log($"❌ Ошибка переименования: {ex.Message}", LogLevel.Error, "❌");
             MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void InsertBlock_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button button && button.Tag is string block)
+        {
+            if (this.DataContext is MainViewModel vm)
+            {
+                vm.RenamePattern += block;
+            }
+        }
+    }
+
+    private void InsertCustomText_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new InputDialog("Введите текст:", "");
+        if (dialog.ShowDialog() == true)
+        {
+            if (this.DataContext is MainViewModel vm)
+            {
+                vm.RenamePattern += dialog.Input;
+            }
+        }
+    }
+    private void FileType_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string profileName)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.SelectedProfile = profileName switch
+                {
+                    "PhotosOnly" => FileTypeProfile.PhotosOnly,
+                    "VideosOnly" => FileTypeProfile.VideosOnly,
+                    "PhotosAndVideos" => FileTypeProfile.PhotosAndVideos,
+                    "AllSupported" => FileTypeProfile.AllSupported,
+                    _ => FileTypeProfile.PhotosOnly
+                };
+            }
+        }
+    }
+    private void Mode_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb)
+        {
+            if (rb.Tag as string == "SortOnly")
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.IsSortOnly = true;
+                    vm.IsSortAndDuplicates = false;
+                }
+            }
+            else if (rb.Tag as string == "SortAndDuplicates")
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.IsSortOnly = false;
+                    vm.IsSortAndDuplicates = true;
+                }
+            }
+        }
+    }
+
+    private void SaveLog_Click(object sender, RoutedEventArgs e)
+    {
+        var vm = DataContext as MainViewModel;
+        if (vm?.Logger?.Count > 0)
+        {
+            var dialog = new SaveFileDialog();
+            dialog.Filter = "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*";
+            dialog.FileName = $"PhotoSorter_Log_{DateTime.Now:yyyyMMdd_HHmm}.txt";
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var lines = vm.Logger.Select(entry => entry.Message).ToArray();
+                    File.WriteAllLines(dialog.FileName, lines);
+                    MessageBox.Show("Лог сохранён.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 
@@ -559,6 +648,7 @@ public partial class MainWindow : Window
     #endregion
 }
 
+
 public class OpenFolderDialog
 {
     public string? FolderName { get; private set; }
@@ -589,3 +679,6 @@ public class OpenFolderDialog
         return false;
     }
 }
+
+
+

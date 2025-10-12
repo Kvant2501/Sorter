@@ -28,7 +28,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="0,0,20,20" Padding="12" Background="White" 
-                                BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Width="320">
+                                BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Width="340">
                             <StackPanel>
                                 <TextBlock Text="{Binding Items.Count, StringFormat={}Группа ({0} файлов)}" 
                                            FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10"/>
@@ -38,14 +38,15 @@
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                                 <CheckBox IsChecked="{Binding IsSelected}" 
-                                                          VerticalAlignment="Top" Margin="0,2,4,0"/>
-                                                <!-- Уменьшили отступ -->
+                                                          VerticalAlignment="Top" Margin="0,2,10,0"/>
+                                                <!-- Расстояние 10 пикселей -->
                                                 <Image Source="{Binding FilePath, Converter={StaticResource FileToPreviewConverter}}" 
-                                                       Width="80" Height="60" Stretch="Uniform" Margin="0,0,10,0">
-                                                    <!-- Увеличили в 2 раза -->
+                                                       Width="80" Height="60" Stretch="Uniform" Margin="0,0,8,0">
                                                     <Image.ToolTip>
-                                                        <Image Source="{Binding FilePath, Converter={StaticResource FileToPreviewConverter}}" 
-                                                               Width="240" Height="180" Stretch="Uniform"/>
+                                                        <!-- Всплывающее превью — оригинального размера -->
+                                                        <Image Source="{Binding FilePath}" 
+                                                               Width="320" Height="240" Stretch="Uniform" 
+                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
                                                     </Image.ToolTip>
                                                 </Image>
                                                 <StackPanel>
