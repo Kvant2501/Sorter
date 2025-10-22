@@ -12,7 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-#nullable disable
+using static System.Runtime.InteropServices.JavaScript.JSType;
+#nullable enable
 
 namespace PhotoSorterApp;
 
@@ -75,48 +76,59 @@ public partial class MainWindow : Window
 
     private async Task StartSortingOnly(MainViewModel vm)
     {
-        var extensions = SupportedFormats.GetExtensionsByProfile(vm.SelectedProfile);
-        var extSet = new HashSet<string>(extensions, StringComparer.OrdinalIgnoreCase); // ← создаём HashSet
-
-        var allFiles = Directory.GetFiles(vm.SortingOptions.SourceFolder, "*.*",
-            vm.SortingOptions.IsRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
-            .Where(f => extSet.Contains(Path.GetExtension(f))) // ← теперь работает
-            .ToList();
-        int allFilesCount = allFiles.Count;
-
-        vm.Logger.Log($"🔄 Начата сортировка по профилю '{vm.SelectedProfile}'...", LogLevel.Info, "🔄");
-        vm.IsProgressVisible = true;
-        vm.ProgressValue = 0;
+        int movedFiles = 0;
+        var errors = new List<string>();
 
         _cts = new CancellationTokenSource();
-        var logProgress = new Progress<string>(msg => vm.Logger.Log(msg, LogLevel.Info));
-        var progressPercent = new Progress<int>(value => vm.ProgressValue = value);
 
-        int movedFiles = 0;
+        var progressDialog = new ProgressDialog("Сортировка", "Начата сортировка...", () =>
+        {
+            _cts.Cancel(); // ← Отменяем через токен
+            vm.Logger.Log("⚠️ Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+        });
+        progressDialog.Owner = this;
+        progressDialog.Show();
+
         try
         {
             await Task.Run(() =>
             {
-                var sortingService = new PhotoSortingService(vm.Logger); // ← передаём LogCollection
-                movedFiles = sortingService.SortPhotos(vm.SortingOptions, vm.SelectedProfile, logProgress, progressPercent, _cts.Token);
+                try
+                {
+                    var service = new PhotoSortingService();
+                    var result = service.SortPhotos(
+                        vm.SortingOptions,
+                        vm.SelectedProfile,
+                        null,
+                        _cts.Token); // ← Передаём токен!
+                    movedFiles = result.MovedFiles;
+                    errors = result.Errors;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Нормально — отмена
+                }
+                catch (Exception ex)
+                {
+                    // Логируем ошибку, но не выбрасываем — иначе Task упадёт
+                    errors.Add($"Внутренняя ошибка: {ex.Message}");
+                }
             });
 
-            vm.Logger.Log($"✅ Сортировка завершена. Найдено файлов: {allFilesCount}, перемещено: {movedFiles}", LogLevel.Info, "✅");
+            // Обновляем лог в UI-потоке
+            vm.Logger.Log($"✅ Сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
+            foreach (var error in errors)
+            {
+                vm.Logger.Log(error, LogLevel.Error, "❌");
+            }
         }
         catch (Exception ex)
         {
             vm.Logger.Log($"❌ Критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
-            MessageBox.Show(
-                $"Ошибка при обработке папки:\n{ex.Message}\n\n" +
-                "Убедитесь, что выбрана обычная папка, а не корневой диск.",
-                "Ошибка",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
         }
         finally
         {
-            vm.IsProgressVisible = false;
-            vm.ProgressValue = 0;
+            progressDialog.Close();
         }
     }
 
@@ -477,44 +489,44 @@ public partial class MainWindow : Window
             return (0, 0, 0);
         }
 
-        var progressBar = new ProgressBar { Height = 12, IsIndeterminate = true, Margin = new Thickness(20, 10, 20, 0) };
-        var statusText = new TextBlock
-        {
-            Text = "Поиск дубликатов...",
-            Margin = new Thickness(20, 20, 20, 10),
-            FontSize = 14
-        };
+        _cts = new CancellationTokenSource();
 
-        var layout = new StackPanel { Children = { statusText, progressBar } };
-
-        var progressWindow = new Window
+        var progressDialog = new ProgressDialog("Поиск дубликатов", "Ищем дубликаты...", () =>
         {
-            Title = "Поиск дубликатов",
-            Content = layout,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Owner = this,
-            SizeToContent = SizeToContent.WidthAndHeight,
-            ResizeMode = System.Windows.ResizeMode.NoResize,
-            Width = 350
-        };
-        progressWindow.Show();
+            _cts.Cancel();
+            vm.Logger.Log("⚠️ Поиск дубликатов отменён пользователем.", LogLevel.Warning, "⚠️");
+        });
+      
+        progressDialog.Owner = this;
+        progressDialog.Show();
 
         try
         {
             var extensions = SupportedFormats.GetExtensionsByProfile(profile);
-            var duplicates = await Task.Run(() =>
-                new DuplicateDetectionService().FindDuplicatesWithExtensions(folderPath, isRecursive, extensions)
-            );
+            List<DuplicateGroup> duplicates = null;
 
-            progressWindow.Close();
+            await Task.Run(() =>
+            {
+                try
+                {
+                    duplicates = new DuplicateDetectionService()
+                        .FindDuplicatesWithExtensions(folderPath, isRecursive, extensions);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Нормально
+                }
+            });
 
-            if (duplicates.Count == 0)
+            progressDialog.Close();
+
+            if (duplicates == null || duplicates.Count == 0)
             {
                 MessageBox.Show("Дубликаты не найдены.", "Результат");
                 return (0, 0, 0);
             }
 
-            var duplicateWindow = new DuplicateWindow(duplicates);
+            var duplicateWindow = new DuplicateWindow(duplicates, this);
             if (duplicateWindow.ShowDialog() == true)
             {
                 return (duplicates.Count, duplicateWindow.DeletedCount, duplicateWindow.MovedCount);
@@ -523,7 +535,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            progressWindow.Close();
+            progressDialog.Close();
             MessageBox.Show($"Ошибка поиска дубликатов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             return (0, 0, 0);
         }

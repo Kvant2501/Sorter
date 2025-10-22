@@ -1,5 +1,4 @@
 ﻿using PhotoSorterApp.Models;
-using PhotoSorterApp.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,17 +9,17 @@ namespace PhotoSorterApp.Services;
 
 public class PhotoSortingService
 {
-    private readonly LogCollection _logger;
+    // УДАЛЕНО: private readonly LogCollection _logger;
 
-    public PhotoSortingService(LogCollection logger)
+    // УДАЛЁН конструктор с логгером
+    public PhotoSortingService()
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public int SortPhotos(
+    // Возвращаем результат вместо логирования
+    public (int MovedFiles, List<string> Errors) SortPhotos(
         SortingOptions options,
         FileTypeProfile profile,
-        IProgress<string> logProgress,
         IProgress<int> progressPercent,
         CancellationToken cancellationToken)
     {
@@ -35,18 +34,25 @@ public class PhotoSortingService
             .Where(f => extSet.Contains(Path.GetExtension(f)))
             .ToList();
 
+        var errors = new List<string>();
+
         if (allFiles.Count == 0)
         {
-            logProgress?.Report("Файлы для сортировки не найдены.");
-            return 0;
+            return (0, errors);
         }
 
         // Опционально: создать бэкап
         if (options.CreateBackup)
         {
             var backupDir = Path.Combine(options.SourceFolder, $"Backup_{DateTime.Now:yyyyMMdd_HHmm}");
-            logProgress?.Report($"Создание бэкапа: {backupDir}");
-            CopyDirectory(options.SourceFolder, backupDir, excludeDirs: new[] { backupDir });
+            try
+            {
+                CopyDirectory(options.SourceFolder, backupDir, excludeDirs: new[] { backupDir });
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Ошибка создания бэкапа: {ex.Message}");
+            }
         }
 
         int total = allFiles.Count;
@@ -83,18 +89,17 @@ public class PhotoSortingService
 
                 File.Move(file, destFile);
                 moved++;
-                logProgress?.Report($"✅ Перемещено: {Path.GetFileName(file)} → {Path.GetFileName(targetDir)}");
             }
             catch (Exception ex)
             {
-                _logger.Log($"❌ Ошибка обработки {file}: {ex.Message}", LogLevel.Error);
+                errors.Add($"Ошибка обработки {file}: {ex.Message}");
             }
 
             processed++;
             progressPercent?.Report((int)(100.0 * processed / total));
         }
 
-        return moved;
+        return (moved, errors);
     }
 
     private static void CopyDirectory(string sourceDir, string targetDir, IEnumerable<string>? excludeDirs = null)
