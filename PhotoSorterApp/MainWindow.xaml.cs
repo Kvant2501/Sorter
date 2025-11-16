@@ -12,7 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 #nullable enable
 
 namespace PhotoSorterApp;
@@ -24,12 +23,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        
     }
-   
+
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
+        _cts?.Cancel();
+        _cts?.Dispose();
     }
 
     #region Вкладка: Сортировка
@@ -55,7 +55,6 @@ public partial class MainWindow : Window
 
     private async void StartProcess_Click(object sender, RoutedEventArgs e)
     {
-
         if (DataContext is not MainViewModel vm) return;
 
         if (string.IsNullOrWhiteSpace(vm.SortingOptions.SourceFolder))
@@ -83,7 +82,7 @@ public partial class MainWindow : Window
 
         var progressDialog = new ProgressDialog("Сортировка", "Начата сортировка...", () =>
         {
-            _cts.Cancel(); // ← Отменяем через токен
+            _cts?.Cancel();
             vm.Logger.Log("⚠️ Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
         });
         progressDialog.Owner = this;
@@ -100,7 +99,7 @@ public partial class MainWindow : Window
                         vm.SortingOptions,
                         vm.SelectedProfile,
                         null,
-                        _cts.Token); // ← Передаём токен!
+                        _cts.Token);
                     movedFiles = result.MovedFiles;
                     errors = result.Errors;
                 }
@@ -110,12 +109,10 @@ public partial class MainWindow : Window
                 }
                 catch (Exception ex)
                 {
-                    // Логируем ошибку, но не выбрасываем — иначе Task упадёт
                     errors.Add($"Внутренняя ошибка: {ex.Message}");
                 }
             });
 
-            // Обновляем лог в UI-потоке
             vm.Logger.Log($"✅ Сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
             foreach (var error in errors)
             {
@@ -128,7 +125,7 @@ public partial class MainWindow : Window
         }
         finally
         {
-            progressDialog.Close();
+            progressDialog?.Close();
         }
     }
 
@@ -140,7 +137,7 @@ public partial class MainWindow : Window
         var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.SortingOptions.SourceFolder, vm.SortingOptions.IsRecursive, vm.SelectedProfile);
         if (groups > 0)
         {
-            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}");
+            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}", LogLevel.Info, "✅");
         }
     }
 
@@ -165,10 +162,10 @@ public partial class MainWindow : Window
             MessageBox.Show("Выберите папку для поиска дубликатов.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-      
-        vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
 
+        vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
         vm.Logger.Log("Запуск поиска дубликатов...");
+
         var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.DuplicatesSearchFolder, vm.IsDuplicatesRecursive, vm.SelectedProfile);
         if (groups > 0)
         {
@@ -245,7 +242,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                vm.Logger.Log("🧹 Очистка: мусор не найден.");
+                vm.Logger.Log("🧹 Очистка: мусор не найден.", LogLevel.Info, "🧹");
                 MessageBox.Show("Мусор не найден.", "Информация");
             }
         }
@@ -291,7 +288,7 @@ public partial class MainWindow : Window
             MessageBoxImage.Warning);
 
         if (result != MessageBoxResult.Yes) return;
-        // Добавь эту строку после проверок, перед try:
+
         vm.Logger.Log($"📝 Применяю шаблон: {vm.RenamePattern} в папке: {vm.RenameFolder}", LogLevel.Info, "📝");
         try
         {
@@ -322,7 +319,6 @@ public partial class MainWindow : Window
                         .Replace("{name}", oldName)
                         .Replace("{index}", (i + 1).ToString("D4"));
 
-                    // Удаляем недопустимые символы
                     foreach (var c in Path.GetInvalidFileNameChars())
                     {
                         newName = newName.Replace(c.ToString(), "_");
@@ -377,6 +373,7 @@ public partial class MainWindow : Window
             }
         }
     }
+
     private void FileType_Checked(object sender, RoutedEventArgs e)
     {
         if (sender is RadioButton rb && rb.Tag is string profileName)
@@ -394,6 +391,7 @@ public partial class MainWindow : Window
             }
         }
     }
+
     private void Mode_Checked(object sender, RoutedEventArgs e)
     {
         if (sender is RadioButton rb)
@@ -430,7 +428,7 @@ public partial class MainWindow : Window
             {
                 try
                 {
-                    var lines = vm.Logger.Select(entry => entry.Message).ToArray();
+                    var lines = vm.Logger.Select(entry => $"[{entry.Timestamp}] {entry.Icon} {entry.Message}").ToArray();
                     File.WriteAllLines(dialog.FileName, lines);
                     MessageBox.Show("Лог сохранён.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -491,41 +489,42 @@ public partial class MainWindow : Window
 
         _cts = new CancellationTokenSource();
 
-        var progressDialog = new ProgressDialog("Поиск дубликатов", "Ищем дубликаты...", () =>
+        bool loadSuccess = false;
+        List<DuplicateGroup>? duplicates = null; // ← Добавлено ?
+
+        var progressDialog = new ProgressDialog("Поиск дубликатов", "Загрузка списка дубликатов...", () =>
         {
-            _cts.Cancel();
-            vm.Logger.Log("⚠️ Поиск дубликатов отменён пользователем.", LogLevel.Warning, "⚠️");
+            _cts?.Cancel();
         });
-      
         progressDialog.Owner = this;
         progressDialog.Show();
 
         try
         {
             var extensions = SupportedFormats.GetExtensionsByProfile(profile);
-            List<DuplicateGroup> duplicates = null;
-
-            await Task.Run(() =>
+            duplicates = await Task.Run(() =>
             {
-                try
-                {
-                    duplicates = new DuplicateDetectionService()
-                        .FindDuplicatesWithExtensions(folderPath, isRecursive, extensions);
-                }
-                catch (OperationCanceledException)
-                {
-                    // Нормально
-                }
+                _cts?.Token.ThrowIfCancellationRequested();
+                return new DuplicateDetectionService().FindDuplicatesWithExtensions(folderPath, isRecursive, extensions);
             });
+            loadSuccess = true;
+        }
+        catch (OperationCanceledException)
+        {
+            loadSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка загрузки дубликатов: {ex.Message}");
+            loadSuccess = false;
+        }
+        finally
+        {
+            progressDialog?.Close();
+        }
 
-            progressDialog.Close();
-
-            if (duplicates == null || duplicates.Count == 0)
-            {
-                MessageBox.Show("Дубликаты не найдены.", "Результат");
-                return (0, 0, 0);
-            }
-
+        if (loadSuccess && duplicates != null && duplicates.Count > 0)
+        {
             var duplicateWindow = new DuplicateWindow(duplicates, this);
             if (duplicateWindow.ShowDialog() == true)
             {
@@ -533,12 +532,13 @@ public partial class MainWindow : Window
             }
             return (duplicates.Count, 0, 0);
         }
-        catch (Exception ex)
+        else if (loadSuccess && duplicates?.Count == 0)
         {
-            progressDialog.Close();
-            MessageBox.Show($"Ошибка поиска дубликатов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show("Дубликаты не найдены.", "Результат");
             return (0, 0, 0);
         }
+
+        return (0, 0, 0);
     }
 
     private string GenerateHelpHtml()
@@ -660,7 +660,6 @@ public partial class MainWindow : Window
     #endregion
 }
 
-
 public class OpenFolderDialog
 {
     public string? FolderName { get; private set; }
@@ -691,6 +690,3 @@ public class OpenFolderDialog
         return false;
     }
 }
-
-
-

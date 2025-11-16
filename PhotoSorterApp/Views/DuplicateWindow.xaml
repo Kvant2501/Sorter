@@ -1,11 +1,11 @@
 ﻿<Window x:Class="PhotoSorterApp.Views.DuplicateWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:helpers="clr-namespace:PhotoSorterApp.Helpers"
+        xmlns:converters="clr-namespace:PhotoSorterApp.Converters"
         Title="Дубликаты" Height="700" Width="900" FontFamily="Segoe UI">
 
     <Window.Resources>
-        <helpers:FileToPreviewConverter x:Key="FileToPreviewConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
 
         <!-- Тень для карточек -->
         <DropShadowEffect x:Key="CardShadow" 
@@ -54,15 +54,17 @@
                                                           VerticalAlignment="Top" 
                                                           Margin="0,4,12,0"/>
 
-                                                <Image Source="{Binding FilePath, Converter={StaticResource FileToPreviewConverter}}" 
-                                                       Width="80" Height="60" Stretch="Uniform" 
-                                                       Margin="0,0,12,0">
-                                                    <Image.ToolTip>
-                                                        <Image Source="{Binding FilePath}" 
-                                                               Width="320" Height="240" Stretch="Uniform" 
-                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                    </Image.ToolTip>
-                                                </Image>
+                                                <!-- Превью с заполнителем -->
+                                                <Grid Width="80" Height="60" Margin="0,0,12,0">
+                                                    <Image Source="{Binding Preview}" 
+                                                           Stretch="Uniform"
+                                                           Visibility="{Binding Preview, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                                    <TextBlock Text="🖼️" 
+                                                               FontSize="20"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding Preview, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}"/>
+                                                </Grid>
 
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding FileName}" 
@@ -82,24 +84,19 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Кнопки с закруглёнными углами -->
+        <!-- Кнопки -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <!-- Удалить -->
             <Border CornerRadius="4" Background="#FF5F5F" Margin="0,0,12,0">
                 <Button Content="Удалить выбранные" Click="DeleteSelected_Click" 
                         Padding="16,10" Foreground="White" 
                         FontSize="14" FontWeight="Medium"
                         BorderThickness="0" Background="Transparent"/>
             </Border>
-
-            <!-- Переместить -->
             <Border CornerRadius="4" BorderBrush="#CCCCCC" BorderThickness="1" Margin="0,0,12,0">
                 <Button Content="Переместить..." Click="MoveSelected_Click" 
                         Padding="16,10" FontSize="14" FontWeight="Medium"
                         BorderThickness="0" Background="Transparent"/>
             </Border>
-
-            <!-- Закрыть -->
             <Border CornerRadius="4" BorderBrush="#CCCCCC" BorderThickness="1">
                 <Button Content="Закрыть" Click="Close_Click" 
                         Padding="16,10" FontSize="14" FontWeight="Medium"

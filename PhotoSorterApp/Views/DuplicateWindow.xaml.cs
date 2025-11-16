@@ -1,17 +1,22 @@
-﻿using PhotoSorterApp.Models;
+﻿#nullable enable
+
+using PhotoSorterApp.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+
 
 namespace PhotoSorterApp.Views;
 
-// Вспомогательные классы
 public class GroupWrapper
 {
     public List<FileItem> Items { get; set; } = new();
@@ -19,7 +24,19 @@ public class GroupWrapper
 
 public class FileItem : INotifyPropertyChanged
 {
-    public string FilePath { get; set; } = "";
+    private string _filePath = string.Empty; // ← Инициализация
+    public string FilePath
+    {
+        get => _filePath;
+        set
+        {
+            _filePath = value;
+            if (!string.IsNullOrEmpty(value))
+            {
+                Debug.WriteLine($"Файл: {value}, Расширение: {Path.GetExtension(value)}");
+            }
+        }
+    }
 
     public string FileName
     {
@@ -51,6 +68,27 @@ public class FileItem : INotifyPropertyChanged
         }
     }
 
+    private BitmapImage? _preview;
+    private bool _previewLoaded;
+
+    /// <summary>
+    /// Превью изображения. Возвращает null, пока не загрузится.
+    /// </summary>
+    public BitmapImage? Preview
+    {
+        get
+        {
+            if (!_previewLoaded)
+            {
+                _previewLoaded = true;
+                _ = Task.Run(LoadPreviewAsync);
+                return null;
+            }
+            return _preview;
+        }
+        private set { _preview = value; OnPropertyChanged(); }
+    }
+
     private bool _isSelected;
     public bool IsSelected
     {
@@ -58,63 +96,53 @@ public class FileItem : INotifyPropertyChanged
         set { _isSelected = value; OnPropertyChanged(); }
     }
 
+    private async Task LoadPreviewAsync()
+    {
+        try
+        {
+            Debug.WriteLine($"Загрузка превью: {FilePath}");
+
+            using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            var frame = decoder.Frames[0];
+            var bitmap = new WriteableBitmap(frame);
+
+            // Масштабируем до 80x60
+            var scale = Math.Min(80.0 / bitmap.PixelWidth, 60.0 / bitmap.PixelHeight);
+            var resized = new TransformedBitmap(bitmap, new ScaleTransform(scale, scale));
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                _preview = resized;
+                OnPropertyChanged(nameof(Preview));
+                Debug.WriteLine($"✅ Превью загружено: {FilePath}");
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Ошибка загрузки превью {FilePath}: {ex.Message}");
+        }
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     protected virtual void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-// Основной класс — ДОЛЖЕН быть partial!
 public partial class DuplicateWindow : Window
 {
-    private List<DuplicateGroup> _groups;
-    private Window? _owner;
-
     public int DeletedCount { get; private set; }
     public int MovedCount { get; private set; }
 
     public DuplicateWindow(List<DuplicateGroup> groups, Window owner = null)
     {
-        _groups = groups;
-        _owner = owner;
-        InitializeComponent(); // ← Обязательно!
-        Loaded += OnLoaded;
+        Owner = owner;
+        InitializeComponent();
+        SetupBindings(groups);
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        Loaded -= OnLoaded;
-
-        var progressDialog = new ProgressDialog("Загрузка дубликатов", "Формирование списка...", () =>
-        {
-            Close();
-        });
-
-        if (_owner != null)
-        {
-            progressDialog.Owner = _owner;
-        }
-
-        progressDialog.Show();
-
-        // ДАЁМ WPF ВРЕМЯ НА ОТРИСОВКУ ПРОГРЕСС-ОКНА
-        await Task.Yield(); // ← Передаём управление обратно в UI-поток
-
-        try
-        {
-            var data = await Task.Run(() =>
-            {
-                return CreateBindings(_groups);
-            });
-
-            DataContext = data;
-        }
-        finally
-        {
-            progressDialog.Close();
-        }
-    }
-
-    private object CreateBindings(List<DuplicateGroup> groups)
+    private void SetupBindings(List<DuplicateGroup> groups)
     {
         var wrappedGroups = groups.Select(g =>
         {
@@ -126,6 +154,8 @@ public partial class DuplicateWindow : Window
             var items = new List<FileItem>();
             for (int i = 0; i < sortedFiles.Count; i++)
             {
+                var filePath = sortedFiles[i].Path;
+                Debug.WriteLine($"Добавлен файл: {filePath}"); // ← Логируем путь
                 items.Add(new FileItem
                 {
                     FilePath = sortedFiles[i].Path,
@@ -135,10 +165,9 @@ public partial class DuplicateWindow : Window
             return new GroupWrapper { Items = items };
         }).ToList();
 
-        return new { DuplicateGroups = wrappedGroups };
+        DataContext = new { DuplicateGroups = wrappedGroups };
     }
 
-    // === ОБЯЗАТЕЛЬНО: методы из XAML ===
     private async void DeleteSelected_Click(object sender, RoutedEventArgs e)
     {
         await ProcessFilesAsync();
@@ -184,8 +213,6 @@ public partial class DuplicateWindow : Window
 
     private async Task ProcessFilesAsync()
     {
-        if (DataContext == null) return;
-
         var context = (dynamic)DataContext;
         var groups = (IEnumerable<GroupWrapper>)context.DuplicateGroups;
 

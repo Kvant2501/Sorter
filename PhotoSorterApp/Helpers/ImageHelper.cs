@@ -1,4 +1,6 @@
-﻿using SixLabors.ImageSharp;
+﻿#nullable enable
+
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using System.IO;
 using System.Windows.Media.Imaging;
