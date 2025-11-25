@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿#nullable enable
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Windows.Media.Imaging;
 
@@ -10,7 +11,7 @@ public partial class DuplicateItem : ObservableObject
     public long FileSize { get; }
     public string FileName => Path.GetFileName(FilePath);
     public string DisplaySize => $"{FileSize / 1024.0:F1} KB";
-    public BitmapImage? Thumbnail { get; }
+    public BitmapSource? Thumbnail { get; set; }
 
     [ObservableProperty]
     private bool _isSelected;

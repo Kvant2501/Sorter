@@ -1,4 +1,5 @@
-﻿using PhotoSorterApp.Models;
+﻿#nullable enable
+using PhotoSorterApp.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;

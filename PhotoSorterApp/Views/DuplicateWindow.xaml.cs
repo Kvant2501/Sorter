@@ -13,7 +13,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-
+using System.Windows.Input;
 
 namespace PhotoSorterApp.Views;
 
@@ -24,7 +24,7 @@ public class GroupWrapper
 
 public class FileItem : INotifyPropertyChanged
 {
-    private string _filePath = string.Empty; // ← Инициализация
+    private string _filePath = string.Empty;
     public string FilePath
     {
         get => _filePath;
@@ -68,26 +68,41 @@ public class FileItem : INotifyPropertyChanged
         }
     }
 
-    private BitmapImage? _preview;
-    private bool _previewLoaded;
-
-    /// <summary>
-    /// Превью изображения. Возвращает null, пока не загрузится.
-    /// </summary>
-    public BitmapImage? Preview
+    // Маленькое превью (80x60) — загружается лениво
+    private BitmapSource? _preview;
+    public BitmapSource? Preview
     {
         get
         {
-            if (!_previewLoaded)
+            if (_preview == null && !_previewLoaded)
             {
                 _previewLoaded = true;
-                _ = Task.Run(LoadPreviewAsync);
-                return null;
+                _ = Task.Run(LoadSmallPreviewAsync);
             }
             return _preview;
         }
         private set { _preview = value; OnPropertyChanged(); }
     }
+
+    private bool _previewLoaded;
+
+    // Большое превью (при наведении) — загружается по требованию
+    private BitmapSource? _largePreview;
+    public BitmapSource? LargePreview
+    {
+        get
+        {
+            if (_largePreview == null && !_largePreviewLoaded)
+            {
+                _largePreviewLoaded = true;
+                _ = Task.Run(LoadLargePreviewAsync);
+            }
+            return _largePreview;
+        }
+        private set { _largePreview = value; OnPropertyChanged(); }
+    }
+
+    private bool _largePreviewLoaded;
 
     private bool _isSelected;
     public bool IsSelected
@@ -96,32 +111,63 @@ public class FileItem : INotifyPropertyChanged
         set { _isSelected = value; OnPropertyChanged(); }
     }
 
-    private async Task LoadPreviewAsync()
+    // Загрузка маленького превью (80x60)
+    internal async Task LoadSmallPreviewAsync()
     {
         try
         {
-            Debug.WriteLine($"Загрузка превью: {FilePath}");
+            Debug.WriteLine($"Загрузка маленького превью: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            var frame = decoder.Frames[0];
-            var bitmap = new WriteableBitmap(frame);
-
-            // Масштабируем до 80x60
-            var scale = Math.Min(80.0 / bitmap.PixelWidth, 60.0 / bitmap.PixelHeight);
-            var resized = new TransformedBitmap(bitmap, new ScaleTransform(scale, scale));
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.StreamSource = stream;
+            bitmap.DecodePixelWidth = 80;
+            bitmap.DecodePixelHeight = 60;
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            bitmap.Freeze();
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                _preview = resized;
-                OnPropertyChanged(nameof(Preview));
-                Debug.WriteLine($"✅ Превью загружено: {FilePath}");
+                Preview = bitmap;
+                Debug.WriteLine($"✅ Маленькое превью загружено: {FilePath}");
             });
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Ошибка загрузки превью {FilePath}: {ex.Message}");
+            Debug.WriteLine($"❌ Ошибка маленького превью {FilePath}: {ex.Message}");
+        }
+    }
+
+    // Загрузка большого превью (300x200) — только при наведении
+    internal async Task LoadLargePreviewAsync()
+    {
+        try
+        {
+            Debug.WriteLine($"Загрузка большого превью: {FilePath}");
+
+            using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.StreamSource = stream;
+            bitmap.DecodePixelWidth = 300;
+            bitmap.DecodePixelHeight = 200;
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            bitmap.Freeze();
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                LargePreview = bitmap;
+                Debug.WriteLine($"✅ Большое превью загружено: {FilePath}");
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Ошибка большого превью {FilePath}: {ex.Message}");
         }
     }
 
@@ -129,15 +175,15 @@ public class FileItem : INotifyPropertyChanged
     protected virtual void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
-
 public partial class DuplicateWindow : Window
 {
     public int DeletedCount { get; private set; }
     public int MovedCount { get; private set; }
 
-    public DuplicateWindow(List<DuplicateGroup> groups, Window owner = null)
+    // Исправлено: Window? вместо Window
+    public DuplicateWindow(List<DuplicateGroup> groups, Window? owner = null)
     {
-        Owner = owner;
+        Owner = owner; // теперь безопасно для null
         InitializeComponent();
         SetupBindings(groups);
     }
@@ -155,7 +201,7 @@ public partial class DuplicateWindow : Window
             for (int i = 0; i < sortedFiles.Count; i++)
             {
                 var filePath = sortedFiles[i].Path;
-                Debug.WriteLine($"Добавлен файл: {filePath}"); // ← Логируем путь
+                Debug.WriteLine($"Добавлен файл: {filePath}");
                 items.Add(new FileItem
                 {
                     FilePath = sortedFiles[i].Path,
@@ -210,7 +256,24 @@ public partial class DuplicateWindow : Window
         }
         return false;
     }
+    private void OnImageMouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is FileItem fileItem)
+        {
+            // Запускаем загрузку большого превью
+            _ = Task.Run(fileItem.LoadLargePreviewAsync);
+        }
+    }
 
+    private void OnImageMouseLeave(object sender, MouseEventArgs e)
+    {
+        // Можно очистить LargePreview, если нужно сэкономить память
+        // Но лучше кэшировать — пользователь может снова навести
+    }
+    private void OnItemLoaded(object sender, RoutedEventArgs e)
+    {
+      
+    }
     private async Task ProcessFilesAsync()
     {
         var context = (dynamic)DataContext;
@@ -245,4 +308,5 @@ public partial class DuplicateWindow : Window
             }
         }
     }
+
 }
