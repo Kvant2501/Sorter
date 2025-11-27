@@ -133,7 +133,8 @@ public partial class MainWindow : Window
     {
         await StartSortingOnly(vm);
 
-        vm.Logger.Log("Запуск поиска дубликатов...");
+        vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info); // ← добавлен LogLevel.Info
+
         var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.SortingOptions.SourceFolder, vm.SortingOptions.IsRecursive, vm.SelectedProfile);
         if (groups > 0)
         {
@@ -164,7 +165,7 @@ public partial class MainWindow : Window
         }
 
         vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
-        vm.Logger.Log("Запуск поиска дубликатов...");
+        vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info); // ← добавлен LogLevel.Info
 
         var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.DuplicatesSearchFolder, vm.IsDuplicatesRecursive, vm.SelectedProfile);
         if (groups > 0)
@@ -501,7 +502,8 @@ public partial class MainWindow : Window
 
         try
         {
-            var extensions = SupportedFormats.GetExtensionsByProfile(profile);
+            var extensionsArray = SupportedFormats.GetExtensionsByProfile(profile);
+            var extensions = new HashSet<string>(extensionsArray, StringComparer.OrdinalIgnoreCase);
             duplicates = await Task.Run(() =>
             {
                 _cts?.Token.ThrowIfCancellationRequested();

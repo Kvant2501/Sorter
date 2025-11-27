@@ -79,23 +79,24 @@
                                             </Grid>
 
                                             <!-- Popup с большим превью -->
-                                            <Popup Placement="Right"
-                                                   PlacementTarget="{Binding ElementName=SmallPreview}"
-                                                   IsOpen="{Binding IsMouseOver, ElementName=SmallPreview}"
-                                                   StaysOpen="False"
-                                                   AllowsTransparency="True"
-                                                   PopupAnimation="Fade">
-                                                <Border Background="White"
-                                                        BorderBrush="#AAA"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4"
-                                                        Padding="4"
-                                                        MaxWidth="400" MaxHeight="300">
-                                                    <Image Source="{Binding LargePreview}" 
-                                                           Stretch="Uniform"
-                                                           MaxWidth="400" MaxHeight="300"/>
-                                                </Border>
-                                            </Popup>
+                                        <Popup Placement="Right"
+       PlacementTarget="{Binding ElementName=SmallPreview}"
+       IsOpen="{Binding IsMouseOver, ElementName=SmallPreview, Mode=OneWay}"
+       StaysOpen="False"
+       AllowsTransparency="True"
+       PopupAnimation="Fade">
+    <Border Background="White"
+            BorderBrush="#DDD"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="8"
+            MaxWidth="600"
+            MaxHeight="400">
+        <Image Source="{Binding LargePreview}" 
+               Stretch="Uniform"
+               Opacity="0.95"/>
+    </Border>
+</Popup>
 
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding FileName}" 

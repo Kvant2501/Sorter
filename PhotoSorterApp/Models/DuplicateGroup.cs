@@ -4,5 +4,10 @@ namespace PhotoSorterApp.Models;
 
 public class DuplicateGroup
 {
-    public List<string> Files { get; set; } = new();
+    public List<string> Files { get; }
+
+    public DuplicateGroup(List<string> files)
+    {
+        Files = files;
+    }
 }
