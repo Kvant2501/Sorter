@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -78,7 +79,7 @@ public class FileItem : INotifyPropertyChanged
             if (_preview == null && !_previewLoaded)
             {
                 _previewLoaded = true;
-                _ = LoadSmallPreviewAsync();
+                _ = LoadPreviewAsync();
             }
             return _preview;
         }
@@ -87,7 +88,7 @@ public class FileItem : INotifyPropertyChanged
 
     private bool _previewLoaded;
 
-    // Большое превью (при наведении) — загружается по требованию
+    // Большое превью (300x200) — загружается при наведении
     private BitmapSource? _largePreview;
     public BitmapSource? LargePreview
     {
@@ -112,19 +113,16 @@ public class FileItem : INotifyPropertyChanged
         set { _isSelected = value; OnPropertyChanged(); }
     }
 
-    // Токен отмены (устанавливается при создании)
-    private CancellationToken _cancellationToken;
+    // Ограничение: максимум 5 одновременных загрузок
+    private static readonly SemaphoreSlim _semaphore = new(5, 5);
 
-    public void SetCancellationToken(CancellationToken ct)
+    // Загрузка маленького превью
+    internal async Task LoadPreviewAsync(CancellationToken ct = default)
     {
-        _cancellationToken = ct;
-    }
-
-    // Загрузка маленького превью (80x60)
-    internal async Task LoadSmallPreviewAsync()
-    {
+        await _semaphore.WaitAsync(ct);
         try
         {
+            ct.ThrowIfCancellationRequested();
             Debug.WriteLine($"Загрузка маленького превью: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -142,20 +140,29 @@ public class FileItem : INotifyPropertyChanged
             {
                 Preview = bitmap;
                 Debug.WriteLine($"✅ Маленькое превью загружено: {FilePath}");
-            });
+            }, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            // Игнорируем отмену
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"❌ Ошибка маленького превью {FilePath}: {ex.Message}");
         }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
-    // Загрузка большого превью (300x200) — только при наведении
-    internal async Task LoadLargePreviewAsync()
+    // Загрузка большого превью
+    internal async Task LoadLargePreviewAsync(CancellationToken ct = default)
     {
+        await _semaphore.WaitAsync(ct);
         try
         {
-            _cancellationToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
             Debug.WriteLine($"Загрузка большого превью: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -169,13 +176,11 @@ public class FileItem : INotifyPropertyChanged
             bitmap.EndInit();
             bitmap.Freeze();
 
-            if (_cancellationToken.IsCancellationRequested) return;
-
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 LargePreview = bitmap;
                 Debug.WriteLine($"✅ Большое превью загружено: {FilePath}");
-            });
+            }, ct);
         }
         catch (OperationCanceledException)
         {
@@ -184,6 +189,10 @@ public class FileItem : INotifyPropertyChanged
         catch (Exception ex)
         {
             Debug.WriteLine($"❌ Ошибка большого превью {FilePath}: {ex.Message}");
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 
@@ -194,10 +203,11 @@ public class FileItem : INotifyPropertyChanged
 
 public partial class DuplicateWindow : Window
 {
-    private readonly CancellationTokenSource _cts = new();
-
     public int DeletedCount { get; private set; }
     public int MovedCount { get; private set; }
+
+    // Источник токена для отмены
+    private readonly CancellationTokenSource _cts = new();
 
     public DuplicateWindow(List<DuplicateGroup> groups, Window? owner = null)
     {
@@ -227,13 +237,11 @@ public partial class DuplicateWindow : Window
             {
                 var filePath = sortedFiles[i].Path;
                 Debug.WriteLine($"Добавлен файл: {filePath}");
-                var item = new FileItem
+                items.Add(new FileItem
                 {
                     FilePath = sortedFiles[i].Path,
                     IsSelected = i > 0
-                };
-                item.SetCancellationToken(_cts.Token); // ← передали токен
-                items.Add(item);
+                });
             }
             return new GroupWrapper { Items = items };
         }).ToList();
@@ -286,20 +294,15 @@ public partial class DuplicateWindow : Window
 
     private void OnImageMouseEnter(object sender, MouseEventArgs e)
     {
-                if (sender is Image image && image.DataContext is FileItem item)
+        if (sender is Image image && image.DataContext is FileItem item)
         {
-            _ = item.LoadLargePreviewAsync(); // ← без параметров, токен уже установлен
+            _ = item.LoadLargePreviewAsync(_cts.Token);
         }
     }
 
     private void OnImageMouseLeave(object sender, MouseEventArgs e)
     {
         // Popup закроется автоматически
-    }
-
-    private void OnItemLoaded(object sender, RoutedEventArgs e)
-    {
-        // Можно использовать для логики при появлении элемента
     }
 
     private async Task ProcessFilesAsync()
