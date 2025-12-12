@@ -1,25 +1,25 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 
 namespace PhotoSorterApp.Views;
 
 public partial class ProgressDialog : Window
 {
-    private readonly Action _onCancel;
-
-    public ProgressDialog(string title, string status, Action onCancel)
+    // ИСПРАВЛЕНО: Конструктор принимает ТОЛЬКО 2 аргумента
+    public ProgressDialog(string title, string statusMessage)
     {
-        _onCancel = onCancel;
-        InitializeComponent(); // ← ДОЛЖЕН БЫТЬ ПЕРВЫМ!
+        InitializeComponent();
+        Title = title;
+        StatusTextBlock.Text = statusMessage;
+    }
 
-        // Теперь можно обращаться к элементам
-        TitleTextBlock.Text = title;
-        StatusTextBlock.Text = status;
+    public void UpdateStatus(string message)
+    {
+        StatusTextBlock.Text = message;
     }
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
-        _onCancel?.Invoke();
+        DialogResult = false;
         Close();
     }
 }

@@ -80,12 +80,16 @@ public partial class MainWindow : Window
 
         _cts = new CancellationTokenSource();
 
-        var progressDialog = new ProgressDialog("Сортировка", "Начата сортировка...", () =>
-        {
-            _cts?.Cancel();
-            vm.Logger.Log("⚠️ Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
-        });
+        var progressDialog = new ProgressDialog("Сортировка", "Начата сортировка...");
         progressDialog.Owner = this;
+        progressDialog.Closed += (s, args) =>
+        {
+            if (progressDialog.DialogResult == false)
+            {
+                _cts?.Cancel();
+                vm.Logger.Log("⚠️ Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            }
+        };
         progressDialog.Show();
 
         try
@@ -133,12 +137,32 @@ public partial class MainWindow : Window
     {
         await StartSortingOnly(vm);
 
-        vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info); // ← добавлен LogLevel.Info
+        vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info);
 
-        var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.SortingOptions.SourceFolder, vm.SortingOptions.IsRecursive, vm.SelectedProfile);
-        if (groups > 0)
+        var tokenSource = new CancellationTokenSource();
+        var (groups, duplicates) = await ViewDuplicatesInternalAsync(
+            vm.SortingOptions.SourceFolder,
+            vm.SortingOptions.IsRecursive,
+            vm.SelectedProfile,
+            tokenSource.Token
+        );
+
+        if (groups > 0 && duplicates != null)
         {
-            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}", LogLevel.Info, "✅");
+            var duplicateWindow = new DuplicateWindow(duplicates, this);
+            bool result = duplicateWindow.ShowDialog() == true;
+
+            // ВСЕГДА логируем факт поиска дубликатов
+            vm.Logger.Log($"✅ Найдено групп: {groups}", LogLevel.Info, "✅");
+
+            if (result)
+            {
+                vm.Logger.Log($"✅ Удалено файлов: {duplicateWindow.DeletedCount}, перемещено: {duplicateWindow.MovedCount}", LogLevel.Info, "✅");
+            }
+        }
+        else if (groups == 0)
+        {
+            vm.Logger.Log("❌ Дубликаты не найдены.", LogLevel.Warning, "❌");
         }
     }
 
@@ -165,13 +189,122 @@ public partial class MainWindow : Window
         }
 
         vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
-        vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info); // ← добавлен LogLevel.Info
 
-        var (groups, deleted, moved) = await ViewDuplicatesInternal(vm.DuplicatesSearchFolder, vm.IsDuplicatesRecursive, vm.SelectedProfile);
-        if (groups > 0)
+        var tokenSource = new CancellationTokenSource();
+        bool isCancelled = false;
+
+        var progressDialog = new ProgressDialog("Поиск дубликатов", "Сканирование папки...");
+        progressDialog.Owner = this;
+        progressDialog.Closed += (s, args) =>
         {
-            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}", LogLevel.Info, "✅");
+            if (progressDialog.DialogResult == false)
+            {
+                tokenSource.Cancel();
+                isCancelled = true;
+            }
+        };
+        progressDialog.Show();
+
+        try
+        {
+            var (groups, duplicates) = await ViewDuplicatesInternalAsync(
+                vm.DuplicatesSearchFolder,
+                vm.IsDuplicatesRecursive,
+                vm.SelectedProfile,
+                tokenSource.Token
+            );
+
+            // ДОБАВЛЕНЫ ОТЛАДОЧНЫЕ ЛОГИ
+            Debug.WriteLine($"[LOG] Найдено групп: {groups}");
+            Debug.WriteLine($"[LOG] Дубликаты не null: {duplicates != null}");
+
+            progressDialog.Close();
+
+            if (groups > 0 && duplicates != null)
+            {
+                var duplicateWindow = new DuplicateWindow(duplicates, this);
+                bool result = duplicateWindow.ShowDialog() == true;
+
+                // ВСЕГДА логируем факт поиска дубликатов
+                vm.Logger.Log($"✅ Найдено групп: {groups}", LogLevel.Info, "✅");
+
+                if (result)
+                {
+                    vm.Logger.Log($"✅ Удалено файлов: {duplicateWindow.DeletedCount}, перемещено: {duplicateWindow.MovedCount}", LogLevel.Info, "✅");
+                }
+            }
+            else if (groups == 0)
+            {
+                vm.Logger.Log("❌ Дубликаты не найдены.", LogLevel.Warning, "❌");
+            }
         }
+        catch (OperationCanceledException)
+        {
+            if (!isCancelled)
+            {
+                MessageBox.Show("Поиск дубликатов отменён.", "Отмена", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка поиска дубликатов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            vm.Logger.Log($"❌ Ошибка поиска: {ex.Message}", LogLevel.Error, "❌");
+        }
+    }
+
+    // Асинхронная версия внутреннего метода
+    private async Task<(int groups, List<DuplicateGroup>? duplicates)> ViewDuplicatesInternalAsync(
+        string folderPath,
+        bool isRecursive,
+        FileTypeProfile profile,
+        CancellationToken cancellationToken)
+    {
+        if (DataContext is not MainViewModel vm)
+        {
+            return (0, null);
+        }
+
+        List<DuplicateGroup>? duplicates = null;
+        bool loadSuccess = false;
+
+        try
+        {
+            var extensionsArray = SupportedFormats.GetExtensionsByProfile(profile);
+            var extensions = new HashSet<string>(extensionsArray, StringComparer.OrdinalIgnoreCase);
+
+            duplicates = await Task.Run(() =>
+            {
+                return new DuplicateDetectionService().FindDuplicatesWithExtensions(
+                    folderPath,
+                    isRecursive,
+                    extensions,
+                    cancellationToken
+                );
+            }, cancellationToken);
+
+            loadSuccess = true;
+        }
+        catch (OperationCanceledException)
+        {
+            loadSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка загрузки дубликатов: {ex.Message}");
+            loadSuccess = false;
+        }
+
+        if (loadSuccess && duplicates != null && duplicates.Count > 0)
+        {
+            return (duplicates.Count, duplicates);
+        }
+        else if (loadSuccess && duplicates?.Count == 0)
+        {
+            MessageBox.Show("Дубликаты не найдены.", "Результат");
+            return (0, null);
+        }
+
+        return (0, null);
     }
 
     #endregion
@@ -480,68 +613,6 @@ public partial class MainWindow : Window
     #endregion
 
     #region Вспомогательные методы
-
-    private async Task<(int groups, int deleted, int moved)> ViewDuplicatesInternal(string folderPath, bool isRecursive, FileTypeProfile profile)
-    {
-        if (DataContext is not MainViewModel vm)
-        {
-            return (0, 0, 0);
-        }
-
-        _cts = new CancellationTokenSource();
-
-        bool loadSuccess = false;
-        List<DuplicateGroup>? duplicates = null; // ← Добавлено ?
-
-        var progressDialog = new ProgressDialog("Поиск дубликатов", "Загрузка списка дубликатов...", () =>
-        {
-            _cts?.Cancel();
-        });
-        progressDialog.Owner = this;
-        progressDialog.Show();
-
-        try
-        {
-            var extensionsArray = SupportedFormats.GetExtensionsByProfile(profile);
-            var extensions = new HashSet<string>(extensionsArray, StringComparer.OrdinalIgnoreCase);
-            duplicates = await Task.Run(() =>
-            {
-                _cts?.Token.ThrowIfCancellationRequested();
-                return new DuplicateDetectionService().FindDuplicatesWithExtensions(folderPath, isRecursive, extensions);
-            });
-            loadSuccess = true;
-        }
-        catch (OperationCanceledException)
-        {
-            loadSuccess = false;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Ошибка загрузки дубликатов: {ex.Message}");
-            loadSuccess = false;
-        }
-        finally
-        {
-            progressDialog?.Close();
-        }
-
-        if (loadSuccess && duplicates != null && duplicates.Count > 0)
-        {
-            var duplicateWindow = new DuplicateWindow(duplicates, this);
-            if (duplicateWindow.ShowDialog() == true)
-            {
-                return (duplicates.Count, duplicateWindow.DeletedCount, duplicateWindow.MovedCount);
-            }
-            return (duplicates.Count, 0, 0);
-        }
-        else if (loadSuccess && duplicates?.Count == 0)
-        {
-            MessageBox.Show("Дубликаты не найдены.", "Результат");
-            return (0, 0, 0);
-        }
-
-        return (0, 0, 0);
-    }
 
     private string GenerateHelpHtml()
     {

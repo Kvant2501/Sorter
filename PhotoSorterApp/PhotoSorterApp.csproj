@@ -9,13 +9,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Converters\**" />
-	  <EmbeddedResource Remove="Converters\**" />
-	  <None Remove="Converters\**" />
-	  <Page Remove="Converters\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
 		<PackageReference Include="MetadataExtractor" Version="2.8.1" />
 		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />

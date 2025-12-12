@@ -79,7 +79,7 @@ public class FileItem : INotifyPropertyChanged
             if (_preview == null && !_previewLoaded)
             {
                 _previewLoaded = true;
-                _ = LoadPreviewAsync();
+                _ = LoadPreviewAsync(_cts.Token);
             }
             return _preview;
         }
@@ -97,7 +97,7 @@ public class FileItem : INotifyPropertyChanged
             if (_largePreview == null && !_largePreviewLoaded)
             {
                 _largePreviewLoaded = true;
-                _ = LoadLargePreviewAsync();
+                _ = LoadLargePreviewAsync(_cts.Token);
             }
             return _largePreview;
         }
@@ -113,8 +113,9 @@ public class FileItem : INotifyPropertyChanged
         set { _isSelected = value; OnPropertyChanged(); }
     }
 
-    // Ограничение: максимум 5 одновременных загрузок
-    private static readonly SemaphoreSlim _semaphore = new(5, 5);
+    // Ограничение: максимум 3 одновременных загрузки
+    private static readonly SemaphoreSlim _semaphore = new(3, 3);
+    private static readonly CancellationTokenSource _cts = new();
 
     // Загрузка маленького превью
     internal async Task LoadPreviewAsync(CancellationToken ct = default)
@@ -134,13 +135,14 @@ public class FileItem : INotifyPropertyChanged
             bitmap.DecodePixelHeight = 60;
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.EndInit();
-            bitmap.Freeze();
+
+            if (ct.IsCancellationRequested) return;
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 Preview = bitmap;
                 Debug.WriteLine($"✅ Маленькое превью загружено: {FilePath}");
-            }, ct);
+            }, DispatcherPriority.Background, ct);
         }
         catch (OperationCanceledException)
         {
@@ -174,13 +176,14 @@ public class FileItem : INotifyPropertyChanged
             bitmap.DecodePixelHeight = 200;
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.EndInit();
-            bitmap.Freeze();
+
+            if (ct.IsCancellationRequested) return;
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 LargePreview = bitmap;
                 Debug.WriteLine($"✅ Большое превью загружено: {FilePath}");
-            }, ct);
+            }, DispatcherPriority.Background, ct);
         }
         catch (OperationCanceledException)
         {

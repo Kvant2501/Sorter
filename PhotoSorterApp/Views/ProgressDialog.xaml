@@ -1,55 +1,48 @@
 ﻿<Window x:Class="PhotoSorterApp.Views.ProgressDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ProgressDialog"
-        Height="180"
-        Width="380"
-        WindowStyle="None"
+        Title="Выполняется операция" Height="180" Width="400"
+        WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="Transparent"
-        AllowsTransparency="True"
-        WindowStartupLocation="CenterOwner">
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="#F5F5F5">
 
-    <Border CornerRadius="10"
-            Background="White"
-            Margin="10"
-            Padding="20"
-            BorderBrush="#E0E0E0"
-            BorderThickness="1">
-        <Grid>
-            <TextBlock x:Name="TitleTextBlock"
-                       Text="Операция..."
-                       FontSize="16"
-                       FontWeight="SemiBold"
-                       Margin="0,0,0,15"
-                       HorizontalAlignment="Center"/>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Vertical"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                <ProgressBar IsIndeterminate="True"
-                             Height="10"
-                             Width="200"
-                             Margin="0,0,0,10"
-                             Background="Transparent"/>
-                <TextBlock x:Name="StatusTextBlock"
-                           Text="Пожалуйста, подождите..."
-                           FontSize="13"
-                           Foreground="#666"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
+        <TextBlock x:Name="StatusTextBlock"
+                   Text="Выполняется операция..."
+                   FontSize="14"
+                   FontWeight="Medium"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,15"/>
 
-            <Button x:Name="CancelButton"
-                    Content="Отмена"
-                    Click="CancelButton_Click"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
-                    Margin="0,20,0,0"
-                    Width="100"
-                    Height="30"
-                    Background="#0078D4"
-                    Foreground="White"
-                    BorderThickness="0"/>
-        </Grid>
-    </Border>
+        <ProgressBar Grid.Row="1"
+                     IsIndeterminate="True"
+                     Height="8"
+                     Foreground="#0078D7"/>
+
+        <Button Grid.Row="2"
+                Content="Отменить"
+                Click="CancelButton_Click"
+                Width="100"
+                Height="30"
+                HorizontalAlignment="Center"
+                Margin="0,15,0,0"
+                Background="#FF5F5F"
+                Foreground="White"
+                BorderThickness="0"
+                Cursor="Hand">
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4"/>
+                </Style>
+            </Button.Resources>
+        </Button>
+    </Grid>
 </Window>

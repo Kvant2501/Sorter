@@ -120,7 +120,7 @@ public class MainViewModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-// Полноценный логгер с методом Log
+// ПОЛНОСТЬЮ ИЗМЕНЁННЫЙ КЛАСС
 public class LogCollection : ObservableCollection<LogEntry>
 {
     public void Log(string message, LogLevel level, string icon = "")
@@ -144,7 +144,6 @@ public class LogEntry
     }
 }
 
-// Единственный LogLevel — здесь!
 public enum LogLevel
 {
     Info,
