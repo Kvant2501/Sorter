@@ -5,7 +5,7 @@
         Title="Дубликаты" Height="700" Width="900" FontFamily="Segoe UI">
 
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Window.Resources>
 
     <Grid Margin="20">
@@ -13,11 +13,12 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <!-- Для StatusBar -->
         </Grid.RowDefinitions>
 
         <TextBlock Text="Выберите файлы для удаления или перемещения. Первый файл в группе остаётся."
                    TextWrapping="Wrap" Margin="0,0,0,20" 
-                   FontStyle="Italic" Foreground="#666" FontSize="14"/>
+                   FontStyle="Italic" Foreground="{StaticResource SubtleTextBrush}" FontSize="14"/>
 
         <!-- ScrollViewer с прокруткой -->
         <ScrollViewer Grid.Row="1" 
@@ -35,11 +36,13 @@
                                 Padding="16" 
                                 Background="White"
                                 CornerRadius="8"
-                                Width="350">
+                                Width="350"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1">
                             <StackPanel>
                                 <TextBlock Text="{Binding Items.Count, StringFormat={}Группа ({0} файлов)}" 
                                            FontWeight="SemiBold" FontSize="14" 
-                                           Margin="0,0,0,12" Foreground="#333"/>
+                                           Margin="0,0,0,12" Foreground="{StaticResource TextBrush}"/>
 
                                 <ItemsControl ItemsSource="{Binding Items}">
                                     <ItemsControl.ItemTemplate>
@@ -48,7 +51,8 @@
                                                         Margin="0,0,0,10">
                                                 <CheckBox IsChecked="{Binding IsSelected}" 
                                                           VerticalAlignment="Top" 
-                                                          Margin="0,4,12,0"/>
+                                                          Margin="0,4,12,0"
+                                                          Foreground="{StaticResource PrimaryBrush}"/>
 
                                                 <Grid Width="80" Height="60" Margin="0,0,12,0">
                                                     <Image x:Name="SmallPreview"
@@ -58,7 +62,8 @@
                                                            MouseLeave="OnImageMouseLeave"/>
                                                     <TextBlock Text="Загрузка..." 
                                                                FontSize="12"
-                                                               Visibility="{Binding Preview, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Invert}"
+                                                               Foreground="{StaticResource SubtleTextBrush}"
+                                                               Visibility="{Binding Preview, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"/>
 
@@ -70,7 +75,7 @@
                                                            AllowsTransparency="True"
                                                            PopupAnimation="Fade">
                                                         <Border Background="White"
-                                                                BorderBrush="#AAA"
+                                                                BorderBrush="{StaticResource BorderBrush}"
                                                                 BorderThickness="1"
                                                                 CornerRadius="4"
                                                                 Padding="4"
@@ -85,9 +90,10 @@
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding FileName}" 
                                                                FontWeight="Normal" FontSize="13" 
-                                                               TextTrimming="CharacterEllipsis" MaxWidth="180"/>
+                                                               TextTrimming="CharacterEllipsis" MaxWidth="180"
+                                                               Foreground="{StaticResource TextBrush}"/>
                                                     <TextBlock Text="{Binding DisplaySize}" 
-                                                               FontSize="11" Foreground="#888"/>
+                                                               FontSize="11" Foreground="{StaticResource SubtleTextBrush}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </DataTemplate>
@@ -100,20 +106,38 @@
             </ItemsControl>
         </ScrollViewer>
 
+        <!-- StatusBar с индикатором загрузки -->
+        <StatusBar Grid.Row="2" Background="{StaticResource BackgroundBrush}" 
+                   BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+            <StatusBarItem>
+                <TextBlock Text="{Binding LoadingStatus}" 
+                           FontSize="12" 
+                           Foreground="{StaticResource SubtleTextBrush}"
+                           VerticalAlignment="Center"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right" Width="200">
+                <ProgressBar Value="{Binding LoadedFilesCount}" 
+                             Maximum="{Binding TotalFilesCount}" 
+                             Height="14"
+                             BorderThickness="0"
+                             Foreground="{StaticResource PrimaryBrush}"/>
+            </StatusBarItem>
+        </StatusBar>
+
         <!-- Кнопки -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Border CornerRadius="4" Background="#FF5F5F" Margin="0,0,12,0">
+            <Border CornerRadius="4" Background="{StaticResource AccentBrush}" Margin="0,0,12,0">
                 <Button Content="Удалить выбранные" Click="DeleteSelected_Click" 
                         Padding="16,10" Foreground="White" 
                         FontSize="14" FontWeight="Medium"
                         BorderThickness="0" Background="Transparent"/>
             </Border>
-            <Border CornerRadius="4" BorderBrush="#CCCCCC" BorderThickness="1" Margin="0,0,12,0">
+            <Border CornerRadius="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Margin="0,0,12,0">
                 <Button Content="Переместить..." Click="MoveSelected_Click" 
                         Padding="16,10" FontSize="14" FontWeight="Medium"
                         BorderThickness="0" Background="Transparent"/>
             </Border>
-            <Border CornerRadius="4" BorderBrush="#CCCCCC" BorderThickness="1">
+            <Border CornerRadius="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                 <Button Content="Закрыть" Click="Close_Click" 
                         Padding="16,10" FontSize="14" FontWeight="Medium"
                         BorderThickness="0" Background="Transparent"/>

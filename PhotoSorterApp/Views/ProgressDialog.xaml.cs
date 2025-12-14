@@ -1,10 +1,10 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 
 namespace PhotoSorterApp.Views;
 
 public partial class ProgressDialog : Window
 {
-    // ИСПРАВЛЕНО: Конструктор принимает ТОЛЬКО 2 аргумента
     public ProgressDialog(string title, string statusMessage)
     {
         InitializeComponent();
@@ -12,14 +12,35 @@ public partial class ProgressDialog : Window
         StatusTextBlock.Text = statusMessage;
     }
 
+    public bool IsCanceled { get; private set; }
+
+    public event EventHandler? CancelRequested;
+
     public void UpdateStatus(string message)
     {
         StatusTextBlock.Text = message;
     }
 
+    public void UpdateDetail(string message)
+    {
+        DetailTextBlock.Text = message;
+    }
+
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
-        DialogResult = false;
-        Close();
+        // Помечаем, что пользователь запросил отмену и уведомляем подписчиков.
+        IsCanceled = true;
+        try
+        {
+            CancelRequested?.Invoke(this, EventArgs.Empty);
+        }
+        catch
+        {
+            // Игнорируем любые ошибки обработчиков
+        }
+        finally
+        {
+            Close();
+        }
     }
 }

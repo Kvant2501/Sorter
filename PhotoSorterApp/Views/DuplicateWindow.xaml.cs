@@ -79,7 +79,7 @@ public class FileItem : INotifyPropertyChanged
             if (_preview == null && !_previewLoaded)
             {
                 _previewLoaded = true;
-                _ = LoadPreviewAsync(_cts.Token);
+                _ = LoadPreviewAsync();
             }
             return _preview;
         }
@@ -97,7 +97,7 @@ public class FileItem : INotifyPropertyChanged
             if (_largePreview == null && !_largePreviewLoaded)
             {
                 _largePreviewLoaded = true;
-                _ = LoadLargePreviewAsync(_cts.Token);
+                _ = LoadLargePreviewAsync();
             }
             return _largePreview;
         }
@@ -116,6 +116,9 @@ public class FileItem : INotifyPropertyChanged
     // Ограничение: максимум 3 одновременных загрузки
     private static readonly SemaphoreSlim _semaphore = new(3, 3);
     private static readonly CancellationTokenSource _cts = new();
+
+    // Событие загрузки превью
+    public event Action? PreviewLoaded;
 
     // Загрузка маленького превью
     internal async Task LoadPreviewAsync(CancellationToken ct = default)
@@ -141,6 +144,7 @@ public class FileItem : INotifyPropertyChanged
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 Preview = bitmap;
+                PreviewLoaded?.Invoke();
                 Debug.WriteLine($"✅ Маленькое превью загружено: {FilePath}");
             }, DispatcherPriority.Background, ct);
         }
@@ -204,7 +208,7 @@ public class FileItem : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-public partial class DuplicateWindow : Window
+public partial class DuplicateWindow : Window, INotifyPropertyChanged
 {
     public int DeletedCount { get; private set; }
     public int MovedCount { get; private set; }
@@ -212,22 +216,44 @@ public partial class DuplicateWindow : Window
     // Источник токена для отмены
     private readonly CancellationTokenSource _cts = new();
 
+    // Свойства для StatusBar
+    private int _totalFilesCount;
+    private int _loadedFilesCount;
+
+    public string LoadingStatus => $"Загружено {_loadedFilesCount} из {_totalFilesCount} превью";
+    public int TotalFilesCount
+    {
+        get => _totalFilesCount;
+        set { _totalFilesCount = value; OnPropertyChanged(); }
+    }
+    public int LoadedFilesCount
+    {
+        get => _loadedFilesCount;
+        set { _loadedFilesCount = value; OnPropertyChanged(); }
+    }
+
     public DuplicateWindow(List<DuplicateGroup> groups, Window? owner = null)
     {
         Owner = owner;
         InitializeComponent();
+        DataContext = this; // Устанавливаем DataContext для привязки
         SetupBindings(groups);
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _cts.Cancel();
+        _cts.Cancel(); // Отменяем все загрузки
         _cts.Dispose();
         base.OnClosed(e);
     }
 
     private void SetupBindings(List<DuplicateGroup> groups)
     {
+        // Считаем общее количество файлов
+        _totalFilesCount = groups.Sum(g => g.Files.Count);
+        _loadedFilesCount = 0;
+        OnPropertyChanged(nameof(LoadingStatus)); // Обновляем статус
+
         var wrappedGroups = groups.Select(g =>
         {
             var sortedFiles = g.Files
@@ -240,11 +266,18 @@ public partial class DuplicateWindow : Window
             {
                 var filePath = sortedFiles[i].Path;
                 Debug.WriteLine($"Добавлен файл: {filePath}");
-                items.Add(new FileItem
+                var item = new FileItem
                 {
                     FilePath = sortedFiles[i].Path,
                     IsSelected = i > 0
-                });
+                };
+                item.PreviewLoaded += () =>
+                {
+                    _loadedFilesCount++;
+                    OnPropertyChanged(nameof(LoadedFilesCount));
+                    OnPropertyChanged(nameof(LoadingStatus));
+                };
+                items.Add(item);
             }
             return new GroupWrapper { Items = items };
         }).ToList();
@@ -342,4 +375,8 @@ public partial class DuplicateWindow : Window
             }
         }
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected virtual void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
