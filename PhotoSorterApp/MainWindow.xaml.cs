@@ -24,6 +24,42 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // Initialize theme menu checked state based on App.CurrentTheme
+        if (Application.Current is App app)
+        {
+            var theme = app.CurrentTheme?.ToLowerInvariant();
+            if (theme == "dark")
+            {
+                ThemeDarkMenu.IsChecked = true;
+                ThemeLightMenu.IsChecked = false;
+            }
+            else
+            {
+                ThemeLightMenu.IsChecked = true;
+                ThemeDarkMenu.IsChecked = false;
+            }
+        }
+    }
+
+    private void Theme_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem mi)
+        {
+            // uncheck others
+            if (mi == ThemeLightMenu)
+                ThemeDarkMenu.IsChecked = false;
+            else if (mi == ThemeDarkMenu)
+                ThemeLightMenu.IsChecked = false;
+
+            if (Application.Current is App app)
+            {
+                if (mi == ThemeDarkMenu)
+                    app.ApplyTheme("Dark");
+                else
+                    app.ApplyTheme("Light");
+            }
+        }
     }
 
     protected override void OnClosed(EventArgs e)
@@ -664,6 +700,26 @@ public partial class MainWindow : Window
                     MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+    }
+
+    private void ThemeLight_Click(object sender, RoutedEventArgs e)
+    {
+        if (Application.Current is App app)
+        {
+            app.ApplyTheme("Light");
+            ThemeLightMenu.IsChecked = true;
+            ThemeDarkMenu.IsChecked = false;
+        }
+    }
+
+    private void ThemeDark_Click(object sender, RoutedEventArgs e)
+    {
+        if (Application.Current is App app)
+        {
+            app.ApplyTheme("Dark");
+            ThemeDarkMenu.IsChecked = true;
+            ThemeLightMenu.IsChecked = false;
         }
     }
 

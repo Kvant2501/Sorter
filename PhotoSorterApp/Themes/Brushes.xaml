@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Brushes derived from colors (use DynamicResource for runtime theme switching) -->
+    <SolidColorBrush x:Key="PrimaryBrush" x:Shared="False" Color="{DynamicResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="AccentBrush" x:Shared="False" Color="{DynamicResource AccentColor}"/>
+    <SolidColorBrush x:Key="BackgroundBrush" x:Shared="False" Color="{DynamicResource BackgroundColor}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" x:Shared="False" Color="{DynamicResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="BorderBrush" x:Shared="False" Color="{DynamicResource BorderColor}"/>
+    <SolidColorBrush x:Key="TextBrush" x:Shared="False" Color="{DynamicResource TextColor}"/>
+    <SolidColorBrush x:Key="SubtleTextBrush" x:Shared="False" Color="{DynamicResource SubtleTextColor}"/>
+    <SolidColorBrush x:Key="TextOnPrimaryBrush" x:Shared="False" Color="{DynamicResource TextOnPrimaryColor}"/>
+
+</ResourceDictionary>

@@ -6,7 +6,7 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         Topmost="True"
-        Background="{StaticResource BackgroundBrush}">
+        Background="{DynamicResource BackgroundBrush}">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -22,19 +22,19 @@
                    FontWeight="Medium"
                    TextWrapping="Wrap"
                    Margin="0,0,0,10"
-                   Foreground="{StaticResource TextBrush}"/>
+                   Foreground="{DynamicResource TextBrush}"/>
 
         <TextBlock x:Name="DetailTextBlock"
                    Grid.Row="1"
                    Text="Подготовка..."
                    FontSize="12"
-                   Foreground="{StaticResource SubtleTextBrush}"
+                   Foreground="{DynamicResource SubtleTextBrush}"
                    Margin="0,0,0,15"/>
 
         <ProgressBar Grid.Row="2"
                      IsIndeterminate="True"
                      Height="8"
-                     Foreground="{StaticResource PrimaryBrush}"/>
+                     Foreground="{DynamicResource PrimaryBrush}"/>
 
         <Button Grid.Row="3"
                 x:Name="CancelButton"
@@ -44,15 +44,6 @@
                 Height="30"
                 HorizontalAlignment="Center"
                 Margin="0,15,0,0"
-                Background="{StaticResource AccentBrush}"
-                Foreground="White"
-                BorderThickness="0"
-                Cursor="Hand">
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="4"/>
-                </Style>
-            </Button.Resources>
-        </Button>
+                Style="{DynamicResource PrimaryButton}"/>
     </Grid>
 </Window>
