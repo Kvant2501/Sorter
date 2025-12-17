@@ -1,6 +1,6 @@
 # PhotoSorter
 
-[![Скриншот](PhotoSorterApp/Screenshots/main_window_light.png)](PhotoSorterApp/Screenshots/main_window_light.png)
+
 [![Скриншот](PhotoSorterApp/Screenshots/main_window_dark.png)](PhotoSorterApp/Screenshots/main_window_dark.png)
 
 Инструмент для управления фотоархивом: сортировка по дате, поиск дубликатов, очистка мусора и переименование файлов.
