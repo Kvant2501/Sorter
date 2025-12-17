@@ -6,7 +6,12 @@
 				<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+		<ApplicationIcon>icons8-photo-100.png</ApplicationIcon>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Include="icons8-photo-100.png" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
