@@ -1,0 +1,1307 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<asmv1:assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns="urn:schemas-microsoft-com:asm.v2" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:co.v1="urn:schemas-microsoft-com:clickonce.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns:co.v2="urn:schemas-microsoft-com:clickonce.v2">
+  <asmv1:assemblyIdentity name="PhotoSorterApp.exe" version="1.0.0.0" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
+  <application />
+  <entryPoint>
+    <assemblyIdentity name="Launcher" version="8.0.0.0" language="neutral" processorArchitecture="msil" />
+    <commandLine file="Launcher.exe" parameters="" />
+  </entryPoint>
+  <trustInfo>
+    <security>
+      <applicationRequestMinimum>
+        <PermissionSet Unrestricted="true" ID="Custom" SameSite="site" />
+        <defaultAssemblyRequest permissionSetReference="Custom" />
+      </applicationRequestMinimum>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          Параметры манифеста UAC
+          Если нужно изменить уровень контроля учетных записей Windows, замените 
+          узел requestedExecutionLevel одним из следующих значений.
+
+        <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
+        <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
+
+        Если нужно использовать виртуализацию файлов и реестра для обратной
+             совместимости, удалите узел requestedExecutionLevel.
+    -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentOS>
+      <osVersionInfo>
+        <os majorVersion="5" minorVersion="1" buildNumber="2600" servicePackMajor="0" />
+      </osVersionInfo>
+    </dependentOS>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="Microsoft.Windows.CommonLanguageRuntime" version="4.0.30319.0" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Launcher.exe" size="16384">
+      <assemblyIdentity name="Launcher" version="8.0.0.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>fQB2vHWm3MVjZ78vmSeWyf8vKjGyJvDWUqgc3nwizS4=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <file name="af-ZA\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>kQSvPUoSrU4lEA+p5t42wgpJRkIfwu93LZP7n2vNdCQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="af-ZA\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>FkTnsey+zg0L+oF/OKSKduGDdGi2J8KXbeqGRZfl0/A=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="am-ET\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>e6oeLKu5OyhEuMSaVoEz53drpv3GmYku5iO9XWhx5rs=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="am-ET\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>+Sb9kzHN7wmKBjgWFz1D5Ou4Mgx3mYj0AB424wJzYl8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ar-SA\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>fgahik2/e4L/2DxXylUaIqQ4IHQ15hfb6ryNB0EcfWE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ar-SA\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>qTlVulwJrbYdDOD2KLMmEEyg0XPq5ucOpyJ/xctZ2tM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="az-Latn-AZ\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ysAmAp8eALG4cLiTsnLQWdmb420a2EaLr6CLlBeKgdM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="az-Latn-AZ\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>V3GqT0pMo2UK8uguH6mOLKvGvJN9vc1ErEgk4Cpn0Nw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="be-BY\ModernWpf.Controls.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>OvCx7TR4cEOHz2DmY6lqBcpG2A1tKDfloCrqO6j9Zww=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="be-BY\ModernWpf.resources.dll" size="4096">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>YQYdcxdGE+IiArAjd/ZFzIliNZftGMuVRVFrM38xIZo=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="bg-BG\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>XhNCsK+5d0VrX4b4MMXlxi5wf3z74RGJGoiNBPcd7A4=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="bg-BG\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>XBKJI6bQTt1bW0jx3SDr66edL+3T3m2snMQdyWICONs=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="bn-BD\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>/v6LR4Du361sJxOfVyC42Ok4Zcl/C4vtI9HHI0j+RwE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="bn-BD\ModernWpf.resources.dll" size="4096">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>2P0WNpoOpSRmnqARJq4cjfco+CnOYw5Dvkzf3u+n998=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="bs-Latn-BA\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>hn2qRFGR5UOrC7tk9QIT5ODLqwLTzkZXNUK6dGqlwb4=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="bs-Latn-BA\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>WFYc/kajTde9TlBfuM/g4DrJlkl5EYR1bB1EY6x6w3w=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ca-ES\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>RvRSRWYS0oRLydbs8T0AbdpfdxXmToxxYD1sWxoril8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ca-ES\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>QoTPlH6pJ2/ZW16tziSADdSWq1FhWlk3kOOZJ/APEDY=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="CommunityToolkit.Mvvm.dll" size="117392">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>oqsulFVnM7C7ilbH956OoKNj+YTEmgrnV+MponOkV3Q=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="cs-CZ\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>3v3h7TbNaEZKBoAZ2AgPNomeszfn/aRRRsw5IWpp1oI=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="cs-CZ\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>+wyOrAZ7LLOXk6wkqDGH6jWd/nfwP928b/ED6/k6K48=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="da-DK\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>aPMfMmGLAwfzJuZRcTH22QTDQCyvkUFm/E3LHGgPWqM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="da-DK\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>3Zc2pfHu2MZTiOnFLlQTm7Gc+OKzjEcbPNqnFv+2M+Y=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="de-DE\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>c6Od2Y+ePFbWUxm+URz7M2eOKOkqqOL4wvkU3bOn+4U=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="de-DE\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>m13O+tSv/gfdLXAu4KdXX456CGkII/FxJ8zWu1OGO74=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="el-GR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>F70tJOInAHgw0p8IiT0spuPqZEPkeZ7Qcv0+YvIifNU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="el-GR\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>saB0D/rpaaqwdWjyKUB7V2gTBDEARpgflkhULYMUcxY=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="en-GB\ModernWpf.Controls.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>owrU6Zpvn0Y41MqFqYopdjHHnTJDRQ2hK/HwrI8VF3Y=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="en-GB\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>12uErdDKQZKPAYSxTgbMjyAydC8zb9vN9X1dW1zfbWk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="es-ES\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>+alcukoovMy9NAqjpA5cXqdBa2vw3LQPL4Yy7JpRG0M=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="es-ES\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>w3DLlsGNHXG0bvVyfVB4d1z9A7SaCSyMqtMu8j5I5e0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="es-MX\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>1la9Ngmfs9d3ZecKGGMJy8KvCpMd4af/WIPJXRsm4/s=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="es-MX\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>KfXidjQ4NuF5WabOn1mlY/YZjDbK6nnI//lzTRODuuk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="et-EE\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>v45Qio2iBiWJo5OuC/ME/qg6JheyLHZqq+53gZXkOps=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="et-EE\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>r7Ui2Q0AU1w79W+QTDrxLFGI4ugvngwIOS3IE4Lp4ME=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="eu-ES\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>I/5xjvXQvHC4F/Dth+n8ts5C8A5RZG1+SAo/FcSYyCU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="eu-ES\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>w1Vii1f1nIguM8ivKbK1noME6zUOMCXzDVQwUZ34Pus=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fa-IR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ysA5qczj8gcWPy5qYFnREjHmXcnxaT7sWDCyNXWcFAg=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fa-IR\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>G/NhKUg3HiT52pNmUCW3h7P8gq+++4h+1y4oqSZat0s=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fi-FI\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>kouYBpG6vsEmemp3Qkj/SdSAbBIqXP+a4Fzd4FlaR58=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fi-FI\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>pALbtvTPOkr9dccXib7o/j9DQ7ZtQwxMHeD+vJte6oM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fil-PH\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>I3RANJ+prEOvzl7qm4sWIr3AyCuI5nnnVcXKlpHkLFQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fil-PH\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>tisvJm3XRQ/pKpDZK9/7etLrFhgLBNGIGMAI/mootKo=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fr-CA\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>IQnvySSEfATVelSh/OMHYQZ90mcrqGlAcu7v9HZJ4M0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fr-CA\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>7b2tQTD/NCWaLs0WMbRmLd4xy7gYGM68q2HT7+SyvEg=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fr-FR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>dJczEcwac6Kjc6JtTM9bdKUSSlIu+vNr+0MngIE04O4=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="fr-FR\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ecC3lNZwhGelge6cg7uEAv9zV8Pk2PAOc6SgyAzAr8E=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="gl-ES\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>S+EpNNIqsMl+O3W3wB0SORTCbT+vV/5S5CK9SxcgM20=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="gl-ES\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>LtOogF6wR7HwXCVp+HzYj2A1e2LSK2ZJ8p7AnMt52fM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="he-IL\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>lXUhcwcnFTTvvDB7x7IjG3f/KpR42qjpwLoAD0FKxpg=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="he-IL\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>jAhO8TE2aNPXdM3KfRkma4wldx0N+mD+x2gmxCkHWFA=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="hi-IN\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>HMzM2LRVJYTqr/m4S0Fr/pSv3CmoibcVVQrHx/lOYlE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="hi-IN\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>sss0UAiavQAxJbtzhLf3gIpA+NSWryCgkqrfbMonzpE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="hr-HR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>v58Vdae5g8YeROuvFioFgR9oNTiAHYaMpOmiEFKlmDU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="hr-HR\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>jeMAgefLrA3LVpDNoj/bJnfloaT/6vLTFV0aqbmJe3Y=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="hu-HU\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>3CQG8/Z6MmTwPBMffBFekW1e+Avh525aRWSADgYeT/E=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="hu-HU\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>Unmk7FMsm46jFtf0hNeAFeLNI+X+8f98xeSwnHHkULQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="icons8-photo-100.png" size="2266">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>74SBOQh8lTgrAIsPfd+5B4AkIdXuxBn00HoTq7cSxjg=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="id-ID\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>mvu08xrgvLd0dkclxA7vvtmRUZg8Q9YYPTdtxdrS5Cs=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="id-ID\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>Ttoesk+j17rz/RPEcCGfNVmZNMhLJmB8bGZgQllhVgw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="is-IS\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>Qc1POFKIF8QxYeNniiJkzGIEGALKkZx9TdtNqpXO4c0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="is-IS\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>kDT5EAxb+Qa58Qxb9ZN+tET5/fZzJE+z3gLyRzW0mvk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="it-IT\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>pfIn5VxxMmUz2dMeOTmoGTAtedu49k1xt2joC1r6oEU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="it-IT\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>vCgC6CqYx2o+KlUUGHmzriysgVv+3Mu2IArbaxi0h60=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ja-JP\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>y+BeDU1Bx1CR8JM9WNbC0EFv6IE/n4xsVpdNNoXMMS4=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ja-JP\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>1DDV7OHi3kw0Pu2YNHGGs4doS31D5wvDKXypNkiqFLU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ka-GE\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>pLxX+oNqAq43wZDerVUgAPquQm6bZk/Gw/oJYo7FmK8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ka-GE\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>iZ5yFMeHRDvkpHX+kV2tWjL7OLCTCWEfYBR5F+MmYVA=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="kk-KZ\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>7joDbaInThDdjImEAFqG7+8mNHB9+07J5fBgj4rtIyU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="kk-KZ\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>/OpzcHMTCh/VWKJXfvEKAJPXxFpG1GFQ0+qUFt9ApFI=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="km-KH\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>yeJGOLApVmZgtUxhfZoWjrfKCwaRblBGTNBank7XXWE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="km-KH\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>lJTCVe+g+Zogs8wuxbVIdCu5P0MALlTs6fz8OKhCFzs=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="kn-IN\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>e4kekZK8Y2pzNLAlMNtPGMVoGAHw1/vuTM5k5GqxFF8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="kn-IN\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>wRyF6S7+1LW6b+wIlvKJi+aFM+MuUx9+V/zCd2xM+Lo=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ko-KR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>IrY+JWeuY8jFaPHlnYjjxJ2OBiSIZvWsGHksXIfaw+U=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ko-KR\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>K/deQmTxvJnlZknjY+5rPUbUiG77INdJmxOXKppx1fw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="lo-LA\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>WzYGM1TUM7VWhREKSnLB/fmc54e21d8Brq4qojIqPxU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="lo-LA\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>oCEAwsSjh0rcigy8dSqWuAB2pbHK5owGUpPl1l6dyUQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="lt-LT\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>kyYR6vApdNy9PSrsmLwexEH3KGAAoC8qkUHy9iLdG1U=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="lt-LT\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>vI6lZAoaMbdl27uEUQ+1kM0Q6Y6oAGRQtOgHxXv5NMA=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="lv-LV\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>yb5+oVRD2fEqqoVJS/bigv0vqMtyUC7FZfoE36a8KEk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="lv-LV\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>xluw16zRzz5ey+n2TpSiqKxeuQynVHvtzZR8aCKot8A=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="MetadataExtractor.dll" size="741376">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>DtHON5gFtrHbfnALUDK2F79JUMElAm7E60exAB/PZ+k=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="mk-MK\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>tEZ1BHYHkEWZXciOiWce3jHFsmTMgGEcyJJruudUlrw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="mk-MK\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>F6vX4T2VOqnl5cqW/MuV2WxiYIyCWDKZxmptX6IyjrQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ml-IN\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ncGVp75dN98I+EHaSFIMaeWPitQWXfn/bLVCkzmtCXE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ml-IN\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>PdDkmTNxra/kcOyHTzdPN5yYIXvWHZfYjKF/2czT4P8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ModernWpf.Controls.dll" size="712704">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>NQ4rC4kQOY7EdnVpF2y4TXCw+c+/NJM2bCxSTg0Dlyg=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ModernWpf.dll" size="1577984">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>6qAPDAZjrS+Y6DUxbksKob/Bl0+v57HoUWbNM9H10/Y=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ms-MY\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>2CE2WH4cj6h30nPkB+JR9451HcarDhoqwnaIW24WbJk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ms-MY\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>oQLbKCPIoBpjqQBihriMnqSwvh75c4RJ1JL4uzr2aeo=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="nb-NO\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>cJ7uke9U2itZu69vxgs3Zs2nu5ZB/yX0EdiQiQGyWYM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="nb-NO\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>/PfkVlae2HmeloBbhPixkFwB6tn7QpF5UTsyyex7w/A=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="nl-NL\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>k5idgmEkTPY+SgNfN/tAfPGsRHcjJehnLg+nk5fQ2JI=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="nl-NL\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>qHrAJ3E8sWFWsqWOmHpWsUPS/AqE8WO5nPxuemntz/8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="nn-NO\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>DI5n2sE/mnfg9Z7fTv6FFNXeWxR1tlHqJPz5HiliiFk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="nn-NO\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>6I0RrqTxz8h7TdTAa9M2yUGE5c/e58R12MTAwoWEaEc=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="PhotoSorterApp.deps.json" size="20132">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>mLHglOn7idmQBLRwoZS0txX+eD6w6py17jKyApVt0zM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="PhotoSorterApp.dll" size="109568">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>2ZJBRy2UzMDiYL1lVDiFiAMnSBiykBT2ITRIZF4zmIA=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="PhotoSorterApp.exe" size="151552">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>TB4XnHaJCjjZGUT42w+geZo3gUrI00fJtPT5asnn7Qs=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="PhotoSorterApp.runtimeconfig.json" size="515">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ia0epcnCC2smZUfvJ8CuOEDKtWQtPCrt8GtwJiRWcd0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="pl-PL\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>PTwqY2PIyyCCIGEl+pxIt8KenACrQzllY2KlqagCcOQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="pl-PL\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>a6GUsBcv1PE1kmKdgUTxr3VpW2jQbNWiqW9YPeG+d98=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="pt-BR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>0qStMr8XQnXoC0SEie9UXHy5jLvqVjSwRx9k+vgt93g=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="pt-BR\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>guvR+1OaftSdjvoJPf9+MGuIa9ubMac07wWP4RNkSm0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="pt-PT\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>f4N2EBIK8le3QLXV69+WftBsdHiYxoZYqcysBPByiWk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="pt-PT\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>NAzuK+6GioaHGGT/ntdbFW7bm8Y+7A2Te6BEabChTvI=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ro-RO\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ZQY5KSlaKjtfkBG7UkhnT38DjuvfmLziDV5ZnzVItr4=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ro-RO\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>4LAicZ1y+jfBtesd7CYzWw8aODzl2GZwfo/XIeXtSuk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ru-RU\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>5bODx/MjIoBgY0ZDpGe6QuSfKf1KWZgXl+lVjf5SR9w=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ru-RU\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>UEdbIe0gCFeRtOnhrp3u7/DJzRtKQRF1M70nxqiDha8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="SixLabors.ImageSharp.dll" size="2099712">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>J+8/BGUZFL4xnTx1qJDphffnf5w0Ctm8e7CzN6lzBYg=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sk-SK\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>JeOdKyfVorRXsszqX9XQJjaLLdG75LEgeMfeck/PaNM=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sk-SK\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>6MMTmp8kFk84lZNCFVfAfqZuFnJNcRJFpH1T9lcOUbA=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sl-SI\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>+wd55l9Bp/h3GicGqFyhXTz7GHh5LrIgGZrbr5c0xi4=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sl-SI\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>KjA2t0hI0fRJhf2PLNLPnXH6hsQA6Ecc+koninYcgmc=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sq-AL\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>Zaekq02fE1H4M9Oik7ajpzF3kqt4ciOJPdWtqW9uxh0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sq-AL\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>PWVXKUwT09j3UidJfj9Syr2iqZULcuIQeIZIKChYCNI=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sr-Latn-RS\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>4+NU6ZQNpXCEZVQv9wtwbuG6Mn+PBZZ64HoTlp15C+Y=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sr-Latn-RS\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>PE8cZtHLJ8fXxauuUn1RuLj19LrVpYTkd3UDPyRZg/w=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sv-SE\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>zB/7DvNwgH6TD6EVDscNWrxoBFFv7EwPKwF8e8Xo0Gw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sv-SE\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>jayaxF3SDmIxB1LrZ45gZczxXBtMSOj7kpY9mD9s6Yw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sw-KE\ModernWpf.Controls.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>uwCQHfmZDnvBNlvuQMeq1TQ8scfsyoF93Aw9jw1gtRQ=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="sw-KE\ModernWpf.resources.dll" size="4096">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>AJaVrdyuwDLrlEuRIJSZZRV/xCiAmrxcVgYmkjkSe3E=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ta-IN\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>s+JFE0XzU7UOWf7h2biXjPmTYDZztNktnuCyYsFuZGA=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="ta-IN\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>S1d73K24Hk9UX276Bjf7OQO1OvXMq8dZRIByFN51zoE=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="te-IN\ModernWpf.Controls.resources.dll" size="8192">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>mk3gGoBOZLpnwrLMZQR08V3q/7P6gavDMu3LxY+bR+s=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="te-IN\ModernWpf.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>k9sAq16e4u4EKawwfUL8oO2zxKHDB5MXDlr2Kwvo8Kc=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="th-TH\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>tuknGCDZko5XV0fUx2oil5AyJs95qSvyTaBBeIeubMk=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="th-TH\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>D6Z95ZbbYpdzGkJo8VuBbeEcuKGexnHMHel7Olg65wI=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="tr-TR\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>WznjE/DhL9dRy1Cs1bqCRMOf6ZrbrBQZDbyv+Oq3Qqc=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="tr-TR\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>34W3JhDL4EGVEZ/WtFjVKzoenNnOewruFXCKI3C4M10=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="uk-UA\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>VGzYT4jejQN9z+Hoa7UQBu+mbM7uNicBfj6q2OqAQG8=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="uk-UA\ModernWpf.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>93vsRBLtIPzS7jNoV1yohpBeNF9dHMKJwHc5+A2QLJU=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="uz-Latn-UZ\ModernWpf.Controls.resources.dll" size="7168">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ifOnEsfoSYuSIga97Qt8DLdRorcvp8jcr1Ds1u4XPV0=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="uz-Latn-UZ\ModernWpf.resources.dll" size="4096">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>ldzCGPDrmd4xa9J8qiAzDVqCq3lNiINEZH6J/8oRt7w=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="vi-VN\ModernWpf.Controls.resources.dll" size="7680">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>HRpsZFNzEz+RTDeACxIS0nfgn0Equ5pBCQ6MwTL4UOw=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="vi-VN\ModernWpf.resources.dll" size="6656">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>L4cDFkAincwt5pGTuLo4pcTk4g/1LabNLqtF7KGUBoc=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="XmpCore.dll" size="144896">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>6I/rIlKKeLKUts/ZOQuM6KWyfbAl/5dnmd8jIr3lG1g=</dsig:DigestValue>
+    </hash>
+  </file>
+</asmv1:assembly>

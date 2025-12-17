@@ -6,11 +6,12 @@
 				<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+		<ApplicationIcon>icons8-photo-100.ico</ApplicationIcon>
 		<!-- ApplicationIcon was removed because it referenced a PNG which causes a Win32 resource build error. Add a .ico file and set ApplicationIcon to it if a custom icon is required. -->
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Include="icons8-photo-100.png" />
+	  <Content Include="icons8-photo-100.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
