@@ -2,6 +2,8 @@
 using System.Windows;
 using System.IO;
 using System.Windows.Media;
+using System.Windows.Automation;
+using System.Windows.Controls;
 
 namespace PhotoSorterApp;
 
@@ -68,6 +70,173 @@ public partial class App : Application
             // ignore write errors
         }
 
+        // Ensure top-level brushes are recreated from color tokens so UI updates reliably
+        try
+        {
+            // Map of color keys -> brush keys
+            var map = new (string colorKey, string brushKey)[]
+            {
+                ("PrimaryColor", "PrimaryBrush"),
+                ("AccentColor", "AccentBrush"),
+                ("BackgroundColor", "BackgroundBrush"),
+                ("SurfaceColor", "SurfaceBrush"),
+                ("BorderColor", "BorderBrush"),
+                ("TextColor", "TextBrush"),
+                ("SubtleTextColor", "SubtleTextBrush"),
+                ("TextOnPrimaryColor", "TextOnPrimaryBrush"),
+                ("ShadowColor", "ShadowColor")
+            };
+
+            foreach (var (colorKey, brushKey) in map)
+            {
+                if (Resources.Contains(colorKey))
+                {
+                    var colorObj = Resources[colorKey];
+                    if (colorObj is Color c)
+                    {
+                        if (brushKey == "ShadowColor")
+                        {
+                            Resources[brushKey] = c;
+                        }
+                        else
+                        {
+                            var brush = new SolidColorBrush(c);
+                            Resources[brushKey] = brush;
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // best-effort: do not break theme change on errors
+        }
+
+        // Safer visual refresh: reset and restore Style on framework elements to force DynamicResource re-evaluation
+        try
+        {
+            foreach (Window w in Current.Windows)
+            {
+                // Update window background and foreground from theme resources
+                try
+                {
+                    w.Dispatcher.Invoke(() =>
+                    {
+                        if (Resources.Contains("BackgroundBrush") && Resources["BackgroundBrush"] is Brush bg)
+                        {
+                            w.Background = bg;
+                        }
+
+                        if (Resources.Contains("TextBrush") && Resources["TextBrush"] is Brush fg)
+                        {
+                            w.Foreground = fg;
+                        }
+                    }, System.Windows.Threading.DispatcherPriority.Render);
+                }
+                catch { }
+
+                w.Dispatcher.Invoke(() =>
+                {
+                    void Refresh(DependencyObject obj)
+                    {
+                        if (obj is FrameworkElement fe && !(fe is Window))
+                        {
+                            var savedStyle = fe.Style;
+                            fe.Style = null;
+                            fe.Style = savedStyle;
+                        }
+
+                        if (obj is FrameworkElement fe2)
+                        {
+                            fe2.InvalidateVisual();
+                            try { fe2.UpdateLayout(); } catch { }
+                        }
+
+                        int children = VisualTreeHelper.GetChildrenCount(obj);
+                        for (int i = 0; i < children; i++)
+                        {
+                            var child = VisualTreeHelper.GetChild(obj, i);
+                            Refresh(child);
+                        }
+                    }
+
+                    Refresh(w);
+                }, System.Windows.Threading.DispatcherPriority.Render);
+            }
+        }
+        catch
+        {
+            // best-effort; do not abort theme change on refresh errors
+        }
+
+        // Export some values and map system brushes so popups and system templates follow the theme
+        try
+        {
+            try
+            {
+                if (Resources.Contains("SurfaceBrush")) Resources[SystemColors.MenuBrushKey] = Resources["SurfaceBrush"];
+                if (Resources.Contains("TextBrush")) Resources[SystemColors.MenuTextBrushKey] = Resources["TextBrush"];
+                if (Resources.Contains("PrimaryBrush")) Resources[SystemColors.HighlightBrushKey] = Resources["PrimaryBrush"];
+                if (Resources.Contains("TextOnPrimaryBrush")) Resources[SystemColors.HighlightTextBrushKey] = Resources["TextOnPrimaryBrush"];
+                if (Resources.Contains("SurfaceBrush")) Resources[SystemColors.ControlBrushKey] = Resources["SurfaceBrush"];
+                if (Resources.Contains("TextBrush")) Resources[SystemColors.ControlTextBrushKey] = Resources["TextBrush"];
+            }
+            catch { }
+
+            // For UI tests: write FG/BG for key elements into AutomationProperties.HelpText
+            foreach (Window w in Current.Windows)
+            {
+                try
+                {
+                    w.Dispatcher.Invoke(() =>
+                    {
+                        FrameworkElement? label = null;
+                        FrameworkElement? btn = null;
+                        try { label = w.FindName("LabelFileType") as FrameworkElement; } catch { }
+                        try { btn = w.FindName("StartButton") as FrameworkElement; } catch { }
+
+                        if (label != null)
+                        {
+                            SolidColorBrush? fgBrush = null;
+                            SolidColorBrush? bgBrush = null;
+
+                            if (label is TextBlock tb)
+                            {
+                                fgBrush = tb.Foreground as SolidColorBrush;
+                                bgBrush = tb.Background as SolidColorBrush;
+                            }
+
+                            fgBrush ??= Resources["TextBrush"] as SolidColorBrush;
+                            bgBrush ??= Resources["BackgroundBrush"] as SolidColorBrush;
+
+                            var text = $"FG={ColorToHex(fgBrush?.Color)};BG={ColorToHex(bgBrush?.Color)}";
+                            AutomationProperties.SetHelpText(label, text);
+                        }
+
+                        if (btn != null)
+                        {
+                            SolidColorBrush? fgBrush = null;
+                            SolidColorBrush? bgBrush = null;
+
+                            if (btn is Control ctrl)
+                            {
+                                fgBrush = ctrl.Foreground as SolidColorBrush;
+                                bgBrush = ctrl.Background as SolidColorBrush;
+                            }
+
+                            fgBrush ??= Resources["TextOnPrimaryBrush"] as SolidColorBrush;
+                            bgBrush ??= Resources["PrimaryBrush"] as SolidColorBrush;
+
+                            var text = $"FG={ColorToHex(fgBrush?.Color)};BG={ColorToHex(bgBrush?.Color)}";
+                            AutomationProperties.SetHelpText(btn, text);
+                        }
+                    });
+                }
+                catch { }
+            }
+        }
+        catch { }
+
         // Diagnostic log for UI tests: write merged dictionary sources to temp file
         try
         {
@@ -78,61 +247,56 @@ public partial class App : Application
             {
                 sw.WriteLine(d.Source?.OriginalString ?? "(inline)");
             }
-            sw.WriteLine("---");
-        }
-        catch { }
 
-        // Force re-apply resource references on all open windows to update elements that didn't pick up DynamicResource
-        try
-        {
-            RefreshWindowsResources();
+            // Also log resolved colors/brushes for debugging
+            string[] brushKeys = new[] { "PrimaryBrush", "AccentBrush", "BackgroundBrush", "SurfaceBrush", "BorderBrush", "TextBrush", "SubtleTextBrush", "TextOnPrimaryBrush" };
+            foreach (var key in brushKeys)
+            {
+                if (Resources.Contains(key))
+                {
+                    var val = Resources[key];
+                    if (val is SolidColorBrush sb)
+                    {
+                        sw.WriteLine($"Resource {key}: SolidColorBrush Color={sb.Color}");
+                    }
+                    else if (val is Brush b)
+                    {
+                        sw.WriteLine($"Resource {key}: Brush Type={b.GetType().FullName}");
+                    }
+                    else
+                    {
+                        sw.WriteLine($"Resource {key}: {val?.GetType().FullName ?? "null"} -> {val}");
+                    }
+                }
+                else
+                {
+                    sw.WriteLine($"Resource {key}: (not found)");
+                }
+            }
+
+            // Also log top-level color tokens if present
+            string[] colorKeys = new[] { "PrimaryColor", "BackgroundColor", "SurfaceColor", "TextColor", "SubtleTextColor", "BorderColor", "TextOnPrimaryColor", "ShadowColor" };
+            foreach (var key in colorKeys)
+            {
+                if (Resources.Contains(key))
+                {
+                    var val = Resources[key];
+                    sw.WriteLine($"Color token {key}: {val?.ToString() ?? "null"}");
+                }
+                else
+                {
+                    sw.WriteLine($"Color token {key}: (not found)");
+                }
+            }
+
+            sw.WriteLine("---");
         }
         catch { }
     }
 
-    private void RefreshWindowsResources()
+    private static string ColorToHex(Color? c)
     {
-        var brushKeys = new[] { "BackgroundBrush", "SurfaceBrush", "PrimaryBrush", "BorderBrush", "TextBrush", "SubtleTextBrush", "TextOnPrimaryBrush" };
-
-        foreach (Window win in Current.Windows)
-        {
-            // ensure we run on UI thread
-            win.Dispatcher.Invoke(() =>
-            {
-                // Set resource references on the window itself
-                win.SetResourceReference(Window.BackgroundProperty, "BackgroundBrush");
-                // traverse logical tree and set common properties to resource references
-                TryApplyResourceRefs(win);
-                // force layout update
-                win.InvalidateVisual();
-                win.UpdateLayout();
-            });
-        }
-
-        void TryApplyResourceRefs(DependencyObject node)
-        {
-            if (node is FrameworkElement fe)
-            {
-                // set common properties to resource references so they update when resources change
-                if (fe.TryFindResource("SurfaceBrush") != null)
-                    fe.SetResourceReference(Control.BackgroundProperty, "SurfaceBrush");
-                if (fe.TryFindResource("PrimaryBrush") != null)
-                    fe.SetResourceReference(Control.BorderBrushProperty, "PrimaryBrush");
-                if (fe.TryFindResource("TextBrush") != null)
-                    fe.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-
-                // special-case Buttons
-                if (fe is Control)
-                {
-                    if (fe.TryFindResource("PrimaryBrush") != null)
-                        fe.SetResourceReference(Control.BackgroundProperty, "PrimaryBrush");
-                }
-            }
-
-            foreach (var child in LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>())
-            {
-                TryApplyResourceRefs(child);
-            }
-        }
+        if (c == null) return "#NULL";
+        return c.Value.ToString();
     }
 }

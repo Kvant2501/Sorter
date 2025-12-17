@@ -44,6 +44,6 @@
                 Height="30"
                 HorizontalAlignment="Center"
                 Margin="0,15,0,0"
-                Style="{DynamicResource PrimaryButton}"/>
+                Style="{StaticResource PrimaryButton}"/>
     </Grid>
 </Window>

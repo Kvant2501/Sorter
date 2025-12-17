@@ -10,8 +10,15 @@ using PhotoSorterApp.Models;
 
 namespace PhotoSorterApp.Services;
 
+/// <summary>
+/// Сервис поиска дубликатов в файловой системе по хешу SHA256.
+/// </summary>
 public class DuplicateDetectionService
 {
+    /// <summary>
+    /// Находит группы дублей в указанной папке для заданных расширений.
+    /// Возвращает список групп, каждая группа содержит пути к файлам с одинаковым хешем.
+    /// </summary>
     public List<DuplicateGroup> FindDuplicatesWithExtensions(
         string folderPath,
         bool isRecursive,
@@ -24,25 +31,25 @@ public class DuplicateDetectionService
 
         var searchOption = isRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-        // Используем EnumerateFiles чтобы не выделять большой список и позволить отмену во время перечисления
+        // EnumerateFiles позволяет начать обработку сразу без выделения огромного списка
         var filesEnumerable = Directory.EnumerateFiles(folderPath, "*.*", searchOption)
             .Where(f => extensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase));
 
-        // Для отображения прогресса попробуем посчитать общее количество (это всё ещё лениво-итеративно)
+        // Попробуем посчитать общее количество для отображения прогресса, но это не критично
         int total = 0;
         try
         {
             total = filesEnumerable.Count();
         }
-        catch (Exception)
+        catch
         {
-            // На некоторых больших сетевых ресурсах Count() может падать — в этом случае оставим total = 0 и продолжим
+            // На больших или сетевых хранилищах Count может падать — оставляем total = 0
             total = 0;
         }
 
         if (total == 0)
         {
-            // Попытка быстрого выхода — если нет файлов с такими расширениями
+            // Быстрый выход, если файлов нет
             if (!filesEnumerable.Any())
                 return new List<DuplicateGroup>();
         }
@@ -67,6 +74,7 @@ public class DuplicateDetectionService
                     {
                         hashBytes = sha256.ComputeHash(stream);
                     }
+
                     var hash = Convert.ToBase64String(hashBytes);
 
                     if (!hashGroups.TryGetValue(hash, out var group))
@@ -74,6 +82,7 @@ public class DuplicateDetectionService
                         group = new List<string>();
                         hashGroups[hash] = group;
                     }
+
                     group.Add(file);
 
                     System.Diagnostics.Debug.WriteLine($"[Хеш] {hash} → {file} ({processedFiles}/{(total > 0 ? total : processedFiles)})");

@@ -25,7 +25,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Initialize theme menu checked state based on App.CurrentTheme
+        // Initialize theme menu state based on current application theme
         if (Application.Current is App app)
         {
             var theme = app.CurrentTheme?.ToLowerInvariant();
@@ -46,7 +46,7 @@ public partial class MainWindow : Window
     {
         if (sender is MenuItem mi)
         {
-            // uncheck others
+            // Uncheck the other theme menu item
             if (mi == ThemeLightMenu)
                 ThemeDarkMenu.IsChecked = false;
             else if (mi == ThemeDarkMenu)
@@ -69,7 +69,7 @@ public partial class MainWindow : Window
         _cts?.Dispose();
     }
 
-    #region Вкладка: Сортировка
+    #region Tab: Sorting
 
     private void SelectFolder_Click(object sender, RoutedEventArgs e)
     {
@@ -115,7 +115,7 @@ public partial class MainWindow : Window
         int movedFiles = 0;
         var errors = new List<string>();
 
-        // cancel previous operation if any
+        // Cancel any previous operation and create a new CTS
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -157,11 +157,11 @@ public partial class MainWindow : Window
                 }
                 catch (OperationCanceledException)
                 {
-                    // отмена — нормально
+                    // Cancellation is expected
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"Внутренняя ошибка: {ex.Message}");
+                    errors.Add($"Internal error: {ex.Message}");
                 }
             }, _cts.Token);
 
@@ -193,7 +193,7 @@ public partial class MainWindow : Window
 
         vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info);
 
-        // reuse _cts so user can cancel overall operation
+        // Recreate CTS so user can cancel the whole pipeline
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -212,7 +212,7 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region Вкладка: Дубликаты
+    #region Tab: Duplicates
 
     private void SelectDuplicatesFolder_Click(object sender, RoutedEventArgs e)
     {
@@ -245,7 +245,7 @@ public partial class MainWindow : Window
 
         vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
 
-        // cancel any previous
+        // Cancel previous operation and create new CTS
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -264,7 +264,7 @@ public partial class MainWindow : Window
 
         progressDialog.CancelRequested += OnCancel;
 
-        // progress reporter
+        // Progress reporter
         var progress = new Progress<(int processed, int total, string? current)>(t =>
         {
             try
@@ -305,7 +305,7 @@ public partial class MainWindow : Window
             }
             catch (OperationCanceledException)
             {
-                // отмена — уже залогировано
+                // Cancellation already logged
                 return;
             }
 
@@ -344,7 +344,7 @@ public partial class MainWindow : Window
         }
     }
 
-    // УПРОЩЕННЫЙ МЕТОД (оставлен для совместимости)
+    // SIMPLIFIED METHOD (kept for compatibility)
     private async Task<List<DuplicateGroup>?> GetDuplicateGroupsAsync(
      string folderPath,
      bool isRecursive,
@@ -374,7 +374,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             if (DataContext is MainViewModel vm2)
-                vm2.Logger?.Log($"Ошибка загрузки дубликатов: {ex.Message}", LogLevel.Error, "❌");
+                vm2.Logger?.Log($"Error loading duplicates: {ex.Message}", LogLevel.Error, "❌");
             return null;
         }
     }
@@ -438,7 +438,7 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region Вкладка: Очистка
+    #region Tab: Cleanup
 
     private void SelectCleanupFolder_Click(object sender, RoutedEventArgs e)
     {
@@ -518,7 +518,7 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region Вкладка: Переименование
+    #region Tab: Rename
 
     private void SelectRenameFolder_Click(object sender, RoutedEventArgs e)
     {
@@ -725,7 +725,7 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region Меню
+    #region Menu
 
     private void Exit_Click(object sender, RoutedEventArgs e) => Close();
 
@@ -761,7 +761,7 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region Вспомогательные методы
+    #region Helper methods
 
     private string GenerateHelpHtml()
     {
@@ -879,36 +879,43 @@ public partial class MainWindow : Window
     }
 
     #endregion
-}
 
-public class OpenFolderDialog
-{
-    public string? FolderName { get; private set; }
+    #region Folder selection dialog (helper class)
 
-    public bool ShowDialog()
+    /// <summary>
+    /// Simple wrapper around FolderBrowserDialog for folder selection.
+    /// Does not allow selecting a root drive (e.g. C:\).
+    /// </summary>
+    public class OpenFolderDialog
     {
-        var dialog = new System.Windows.Forms.FolderBrowserDialog();
-        dialog.Description = "Выберите папку (не корневой диск!)";
+        public string? FolderName { get; private set; }
 
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        public bool ShowDialog()
         {
-            var selected = dialog.SelectedPath;
+            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            dialog.Description = "Выберите папку (не корневой диск!)";
 
-            if (selected.Length == 3 && selected.EndsWith(":\\"))
-
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                MessageBox.Show(
-                    "Нельзя выбирать корневой диск (C:\\, D:\\ и т.д.)!\n" +
-                    "Выберите конкретную папку.",
-                    "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                return false;
-            }
+                var selected = dialog.SelectedPath;
 
-            FolderName = selected;
-            return true;
+                if (selected.Length == 3 && selected.EndsWith(":\\"))
+                {
+                    MessageBox.Show(
+                        "Нельзя выбирать корневой диск (C:\\, D:\\ и т.д.)!\n" +
+                        "Выберите конкретную папку.",
+                        "Ошибка",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return false;
+                }
+
+                FolderName = selected;
+                return true;
+            }
+            return false;
         }
-        return false;
     }
+
+    #endregion
 }

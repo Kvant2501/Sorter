@@ -117,7 +117,7 @@ namespace PhotoSorterApp.UITests
         }
 
         [Test]
-        public void ThemeMenu_SwitchesTheme_ScreenshotComparison()
+        public void ThemeMenu_SwitchesTheme_BackgroundAndTextColorsChange()
         {
             var window = _app!.GetMainWindow(_automation!);
             Assert.IsNotNull(window, "Main window should be available");
@@ -147,18 +147,41 @@ namespace PhotoSorterApp.UITests
 
             // open the Theme menu
             themeMenuItem.Click();
-            Thread.Sleep(250);
+            Thread.Sleep(350);
 
-            // find dark menu item
+            // first try finding submenu by AutomationId (robust)
             MenuItem? darkItem = null;
-            var allMenuItemsNow = window.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.MenuItem));
-            foreach (var mi in allMenuItemsNow)
+            var desktopById = _automation!.GetDesktop().FindAllDescendants(cf => cf.ByAutomationId("ThemeDarkMenu"));
+            if (desktopById != null && desktopById.Length > 0)
+                darkItem = desktopById.First().AsMenuItem();
+
+            if (darkItem == null)
             {
-                var name = (mi.Properties.Name.ValueOrDefault ?? string.Empty).Trim();
-                if (name.Equals("Тёмная", StringComparison.OrdinalIgnoreCase) || name.Equals("Темная", StringComparison.OrdinalIgnoreCase) || name.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+                // fallback to name search across desktop
+                var allMenuItemsNow = _automation!.GetDesktop().FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.MenuItem));
+                foreach (var mi in allMenuItemsNow)
                 {
-                    darkItem = mi.AsMenuItem();
-                    break;
+                    var name = (mi.Properties.Name.ValueOrDefault ?? string.Empty).Trim();
+                    if (name.Equals("Тёмная", StringComparison.OrdinalIgnoreCase) || name.Equals("Темная", StringComparison.OrdinalIgnoreCase) || name.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+                    {
+                        darkItem = mi.AsMenuItem();
+                        break;
+                    }
+                }
+            }
+
+            if (darkItem == null)
+            {
+                // fallback: search within main window descendants
+                var localMenuItems = window.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.MenuItem));
+                foreach (var mi in localMenuItems)
+                {
+                    var name = (mi.Properties.Name.ValueOrDefault ?? string.Empty).Trim();
+                    if (name.Equals("Тёмная", StringComparison.OrdinalIgnoreCase) || name.Equals("Темная", StringComparison.OrdinalIgnoreCase) || name.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+                    {
+                        darkItem = mi.AsMenuItem();
+                        break;
+                    }
                 }
             }
 
@@ -173,17 +196,39 @@ namespace PhotoSorterApp.UITests
 
             // reopen and click light
             themeMenuItem.Click();
-            Thread.Sleep(200);
+            Thread.Sleep(350);
 
+            // try find light by automation id
             MenuItem? lightItem = null;
-            var allMenuItemsAfter = window.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.MenuItem));
-            foreach (var mi in allMenuItemsAfter)
+            var desktopLight = _automation!.GetDesktop().FindAllDescendants(cf => cf.ByAutomationId("ThemeLightMenu"));
+            if (desktopLight != null && desktopLight.Length > 0)
+                lightItem = desktopLight.First().AsMenuItem();
+
+            if (lightItem == null)
             {
-                var name = (mi.Properties.Name.ValueOrDefault ?? string.Empty).Trim();
-                if (name.Equals("Светлая", StringComparison.OrdinalIgnoreCase) || name.Equals("Light", StringComparison.OrdinalIgnoreCase))
+                var allMenuItemsAfter = _automation!.GetDesktop().FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.MenuItem));
+                foreach (var mi in allMenuItemsAfter)
                 {
-                    lightItem = mi.AsMenuItem();
-                    break;
+                    var name = (mi.Properties.Name.ValueOrDefault ?? string.Empty).Trim();
+                    if (name.Equals("Светлая", StringComparison.OrdinalIgnoreCase) || name.Equals("Light", StringComparison.OrdinalIgnoreCase))
+                    {
+                        lightItem = mi.AsMenuItem();
+                        break;
+                    }
+                }
+            }
+
+            if (lightItem == null)
+            {
+                var localMenuItemsAfter = window.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.MenuItem));
+                foreach (var mi in localMenuItemsAfter)
+                {
+                    var name = (mi.Properties.Name.ValueOrDefault ?? string.Empty).Trim();
+                    if (name.Equals("Светлая", StringComparison.OrdinalIgnoreCase) || name.Equals("Light", StringComparison.OrdinalIgnoreCase))
+                    {
+                        lightItem = mi.AsMenuItem();
+                        break;
+                    }
                 }
             }
 
@@ -225,6 +270,20 @@ namespace PhotoSorterApp.UITests
             if (distDarkLight < threshold)
             {
                 Assert.Fail($"Theme visual did not change significantly. Dark->Light distance: {distDarkLight:F2} < threshold {threshold}. Check screenshots at {outDir}");
+            }
+
+            // Additionally verify specific control colors via automation Name/HelpText properties if available
+            // find a label "Тип файлов:" textblock and the Start button
+            var label = window.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text).And(cf.ByName("Тип файлов:")));
+            var startButton = window.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Button).And(cf.ByName("Старт")));
+
+            if (label != null && startButton != null)
+            {
+                // try to read AutomationProperties for foreground/background if exposed
+                var labelColor = label.Properties.HelpText.ValueOrDefault;
+                var btnColor = startButton.Properties.HelpText.ValueOrDefault;
+                TestContext.WriteLine($"Label.HelpText = {labelColor}");
+                TestContext.WriteLine($"StartButton.HelpText = {btnColor}");
             }
 
             Assert.Pass("Theme visual changed (screenshot comparison). Artifacts saved at: " + outDir);

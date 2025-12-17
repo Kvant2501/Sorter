@@ -28,7 +28,7 @@ public partial class ProgressDialog : Window
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
-        // Помечаем, что пользователь запросил отмену и уведомляем подписчиков.
+        // Mark that the user requested cancellation and notify subscribers.
         IsCanceled = true;
         try
         {
@@ -36,7 +36,7 @@ public partial class ProgressDialog : Window
         }
         catch
         {
-            // Игнорируем любые ошибки обработчиков
+            // Ignore any handler errors
         }
         finally
         {

@@ -1,6 +1,7 @@
 ﻿<Application x:Class="PhotoSorterApp.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -12,54 +13,24 @@
                 <ResourceDictionary Source="/Styles/Animations.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Глобальные стили (используют DynamicResource чтобы тема могла переключаться в рантайме) -->
+            <!-- Map SystemColors keys to theme tokens so Menu popups and other system-drawn controls follow theme -->
+            <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="{DynamicResource SurfaceColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="{DynamicResource TextColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{DynamicResource SurfaceColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{DynamicResource TextColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource PrimaryColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{DynamicResource TextOnPrimaryColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{DynamicResource BackgroundColor}"/>
+
+            <!-- Global Window style uses DynamicResource so theme can switch at runtime -->
             <Style TargetType="Window">
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
             </Style>
 
-            <Style TargetType="Button">
-                <Setter Property="FontFamily" Value="Segoe UI"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="FontWeight" Value="Medium"/>
-                <Setter Property="Padding" Value="16,8"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="HorizontalAlignment" Value="Left"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Width" Value="Auto"/>
-                <Setter Property="MaxWidth" Value="200"/>
-                <Setter Property="MinHeight" Value="36"/>
-                <Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" 
-                                    CornerRadius="4"
-                                    Padding="{TemplateBinding Padding}">
-                                <TextBlock Text="{TemplateBinding Content}"
-                                           TextTrimming="CharacterEllipsis"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Padding="0,2"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
+            <!-- Default text styles and inputs are defined in Styles/Controls.xaml to keep resource organization consistent -->
 
-            <!-- остальные глобальные стили при необходимости остаются в отдельных файлах -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>

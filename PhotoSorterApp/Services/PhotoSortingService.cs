@@ -8,16 +8,22 @@ using System.Threading;
 
 namespace PhotoSorterApp.Services;
 
+/// <summary>
+/// Service that sorts photos into folders by date taken.
+/// </summary>
 public class PhotoSortingService
 {
-    // УДАЛЕНО: private readonly LogCollection _logger;
-
-    // УДАЛЁН конструктор с логгером
+    /// <summary>
+    /// Default constructor.
+    /// </summary>
     public PhotoSortingService()
     {
     }
 
-    // Возвращаем результат вместо логирования
+    /// <summary>
+    /// Sorts photos: moves files into Year[/Month] structure.
+    /// Returns moved file count and any errors encountered.
+    /// </summary>
     public (int MovedFiles, List<string> Errors) SortPhotos(
         SortingOptions options,
         FileTypeProfile profile,
@@ -42,7 +48,7 @@ public class PhotoSortingService
             return (0, errors);
         }
 
-        // Опционально: создать бэкап
+        // Optionally create a backup of the source
         if (options.CreateBackup)
         {
             var backupDir = Path.Combine(options.SourceFolder, $"Backup_{DateTime.Now:yyyyMMdd_HHmm}");
@@ -52,7 +58,7 @@ public class PhotoSortingService
             }
             catch (Exception ex)
             {
-                errors.Add($"Ошибка создания бэкапа: {ex.Message}");
+                errors.Add($"Backup creation error: {ex.Message}");
             }
         }
 
@@ -75,7 +81,7 @@ public class PhotoSortingService
                 Directory.CreateDirectory(targetDir);
                 string destFile = Path.Combine(targetDir, Path.GetFileName(file));
 
-                // Избегаем перезаписи
+                // Avoid overwrite — add suffix on conflict
                 if (File.Exists(destFile))
                 {
                     string name = Path.GetFileNameWithoutExtension(file);
@@ -93,7 +99,7 @@ public class PhotoSortingService
             }
             catch (Exception ex)
             {
-                errors.Add($"Ошибка обработки {file}: {ex.Message}");
+                errors.Add($"Error processing {file}: {ex.Message}");
             }
 
             processed++;

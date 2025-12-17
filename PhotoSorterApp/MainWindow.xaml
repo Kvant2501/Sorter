@@ -3,14 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PhotoSorterApp.ViewModels"
         xmlns:models="clr-namespace:PhotoSorterApp.Models"
-        Title="PhotoSorter" Height="700" Width="900" FontFamily="Segoe UI">
+        Title="PhotoSorter" Height="700" Width="900">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
     <Window.Resources>
-        <!-- Стиль для иконки ❓ -->
+        <!-- Style for small help icon -->
         <Style x:Key="HelpIconStyle" TargetType="TextBlock">
             <Setter Property="Text" Value="?"/>
             <Setter Property="Width" Value="16"/>
@@ -44,13 +44,13 @@
                 <MenuItem Header="Полная справка" Click="FullHelp_Click"/>
             </MenuItem>
             <MenuItem Header="Тема">
-                <MenuItem x:Name="ThemeLightMenu" Header="Светлая" IsCheckable="True" Checked="Theme_Checked"/>
-                <MenuItem x:Name="ThemeDarkMenu" Header="Тёмная" IsCheckable="True" Checked="Theme_Checked"/>
+                <MenuItem x:Name="ThemeLightMenu" Header="Светлая" IsCheckable="True" Checked="Theme_Checked" AutomationProperties.Name="Светлая" AutomationProperties.AutomationId="ThemeLightMenu"/>
+                <MenuItem x:Name="ThemeDarkMenu" Header="Тёмная" IsCheckable="True" Checked="Theme_Checked" AutomationProperties.Name="Тёмная" AutomationProperties.AutomationId="ThemeDarkMenu"/>
             </MenuItem>
         </Menu>
 
         <TabControl Grid.Row="1" Margin="10">
-            <!-- Вкладка: Сортировка -->
+            <!-- Sorting tab -->
             <TabItem Header="Сортировка">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -70,7 +70,7 @@
                     <TextBox Grid.Row="1" Text="{Binding SortingOptions.SourceFolder}" 
                              Margin="0,0,0,10" Height="26" IsReadOnly="True"/>
 
-                    <!-- Настройки с иконками ❓ -->
+                    <!-- Options with help icons -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
                         <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding SortingOptions.IsRecursive}" 
                                   Margin="0,0,10,0">
@@ -133,7 +133,7 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="3" Text="Тип файлов:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBlock Grid.Row="3" x:Name="LabelFileType" Text="Тип файлов:" Style="{StaticResource HeaderText}" Margin="0,0,0,5"/>
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,25,0,10">
                         <RadioButton Content="Только фото" GroupName="FileType" 
                                      IsChecked="{Binding IsPhotosOnly}" 
@@ -149,7 +149,7 @@
                                      Checked="FileType_Checked" Tag="AllSupported" Margin="0,0,20,0"/>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="4" Text="Режим:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBlock Grid.Row="4" Text="Режим:" Style="{StaticResource HeaderText}" Margin="0,0,0,5"/>
                     <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,25,0,10">
                         <RadioButton Content="Только сортировка" GroupName="Mode" 
                                      IsChecked="{Binding IsSortOnly}" Margin="0,0,20,0"/>
@@ -157,13 +157,12 @@
                                      IsChecked="{Binding IsSortAndDuplicates}" Margin="0,0,20,0"/>
                     </StackPanel>
 
-                    <Button Grid.Row="5" Content="Старт" Click="StartProcess_Click" 
-                            Width="80" Height="30" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource TextOnPrimaryBrush}" 
-                            FontSize="14" FontWeight="Bold" Margin="0,10,0,0"/>
+                    <Button x:Name="StartButton" Grid.Row="5" Content="Старт" Click="StartProcess_Click" 
+                            Width="80" Height="30" Margin="0,10,0,0"/>
                 </Grid>
             </TabItem>
 
-            <!-- Вкладка: Дубликаты -->
+            <!-- Duplicates tab -->
             <TabItem Header="Дубликаты">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -177,7 +176,7 @@
                         <TextBlock Text="{Binding DuplicatesSearchFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <!-- Рекурсивно с подсказкой -->
+                    <!-- Recursive with tip -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
                         <CheckBox Content="Рекурсивно" IsChecked="{Binding IsDuplicatesRecursive}" Margin="0,0,10,0">
                             <CheckBox.ToolTip>
@@ -203,7 +202,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- Вкладка: Очистка -->
+            <!-- Cleanup tab -->
             <TabItem Header="Очистка">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -218,7 +217,7 @@
                         <TextBlock Text="{Binding CleanupFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <!-- Рекурсивно с подсказкой -->
+                    <!-- Recursive with tip -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
                         <CheckBox Content="Рекурсивно" IsChecked="{Binding CleanupRecursive}" Margin="0,0,10,0">
                             <CheckBox.ToolTip>
@@ -250,7 +249,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- Вкладка: Переименование -->
+            <!-- Rename tab -->
             <TabItem Header="Переименование">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -268,7 +267,7 @@
                         <TextBlock Text="{Binding RenameFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <!-- Рекурсивно с подсказкой -->
+                    <!-- Recursive with tip -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
                         <CheckBox Content="Рекурсивно" IsChecked="{Binding IsRenameRecursive}" Margin="0,0,10,0">
                             <CheckBox.ToolTip>
@@ -316,7 +315,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- Вкладка: Лог -->
+            <!-- Log tab -->
             <TabItem Header="Лог">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -338,7 +337,7 @@
                     </ScrollViewer>
 
                     <Button Grid.Row="1" Content="Сохранить лог" Click="SaveLog_Click" 
-                            Width="140" HorizontalAlignment="Right" Margin="0,10,0,0" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource TextOnPrimaryBrush}" FontWeight="Bold"/>
+                            Width="140" HorizontalAlignment="Right" Margin="0,10,0,0" FontWeight="Bold"/>
                 </Grid>
             </TabItem>
         </TabControl>

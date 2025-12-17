@@ -7,9 +7,12 @@ using System.ComponentModel;
 
 namespace PhotoSorterApp.ViewModels;
 
+/// <summary>
+/// Main window ViewModel — holds UI state and options for operations.
+/// </summary>
 public class MainViewModel : INotifyPropertyChanged
 {
-    // === Сортировка ===
+    // === Section: Sorting ===
     private SortingOptions _sortingOptions = new();
     public SortingOptions SortingOptions
     {
@@ -31,7 +34,7 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isSortAndDuplicates = value; OnPropertyChanged(); }
     }
 
-    // === Дубликаты ===
+    // === Section: Duplicates ===
     private string? _duplicatesSearchFolder;
     public string? DuplicatesSearchFolder
     {
@@ -46,7 +49,7 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isDuplicatesRecursive = value; OnPropertyChanged(); }
     }
 
-    // === Очистка ===
+    // === Section: Cleanup ===
     private string? _cleanupFolder;
     public string? CleanupFolder
     {
@@ -82,7 +85,7 @@ public class MainViewModel : INotifyPropertyChanged
         set { _cleanupEmptyFiles = value; OnPropertyChanged(); }
     }
 
-    // === Переименование ===
+    // === Section: Rename ===
     private string? _renameFolder;
     public string? RenameFolder
     {
@@ -104,7 +107,7 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isRenameRecursive = value; OnPropertyChanged(); }
     }
 
-    // === Профиль файлов ===
+    // === File profile ===
     private FileTypeProfile _selectedProfile = FileTypeProfile.PhotosOnly;
     public FileTypeProfile SelectedProfile
     {
@@ -112,7 +115,10 @@ public class MainViewModel : INotifyPropertyChanged
         set { _selectedProfile = value; OnPropertyChanged(); }
     }
 
-    // === Логгер ===
+    // === UI logging ===
+    /// <summary>
+    /// Collection of log entries bound to UI for history display.
+    /// </summary>
     public LogCollection Logger { get; } = new();
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -120,7 +126,9 @@ public class MainViewModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-// ПОЛНОСТЬЮ ИЗМЕНЁННЫЙ КЛАСС
+/// <summary>
+/// Simple log collection with helper Add method.
+/// </summary>
 public class LogCollection : ObservableCollection<LogEntry>
 {
     public void Log(string message, LogLevel level, string icon = "")
@@ -129,6 +137,9 @@ public class LogCollection : ObservableCollection<LogEntry>
     }
 }
 
+/// <summary>
+/// Log entry — contains message, level and icon/marker.
+/// </summary>
 public class LogEntry
 {
     public string Message { get; }

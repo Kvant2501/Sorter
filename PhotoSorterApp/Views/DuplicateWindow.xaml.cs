@@ -35,7 +35,7 @@ public class FileItem : INotifyPropertyChanged
             _filePath = value;
             if (!string.IsNullOrEmpty(value))
             {
-                Debug.WriteLine($"Файл: {value}, Расширение: {Path.GetExtension(value)}");
+                Debug.WriteLine($"File: {value}, Extension: {Path.GetExtension(value)}");
             }
         }
     }
@@ -70,7 +70,7 @@ public class FileItem : INotifyPropertyChanged
         }
     }
 
-    // Маленькое превью (80x60) — загружается лениво
+    // Small preview (80x60) — loaded lazily
     private BitmapSource? _preview;
     public BitmapSource? Preview
     {
@@ -88,7 +88,7 @@ public class FileItem : INotifyPropertyChanged
 
     private bool _previewLoaded;
 
-    // Большое превью (300x200) — загружается при наведении
+    // Large preview (300x200) — loaded on hover
     private BitmapSource? _largePreview;
     public BitmapSource? LargePreview
     {
@@ -113,21 +113,21 @@ public class FileItem : INotifyPropertyChanged
         set { _isSelected = value; OnPropertyChanged(); }
     }
 
-    // Ограничение: максимум 3 одновременных загрузки
+    // Limit: maximum 3 concurrent loads
     private static readonly SemaphoreSlim _semaphore = new(3, 3);
     private static readonly CancellationTokenSource _cts = new();
 
-    // Событие загрузки превью
+    // Preview loaded event
     public event Action? PreviewLoaded;
 
-    // Загрузка маленького превью
+    // Load small preview
     internal async Task LoadPreviewAsync(CancellationToken ct = default)
     {
         await _semaphore.WaitAsync(ct);
         try
         {
             ct.ThrowIfCancellationRequested();
-            Debug.WriteLine($"Загрузка маленького превью: {FilePath}");
+            Debug.WriteLine($"Loading small preview: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
@@ -145,16 +145,16 @@ public class FileItem : INotifyPropertyChanged
             {
                 Preview = bitmap;
                 PreviewLoaded?.Invoke();
-                Debug.WriteLine($"✅ Маленькое превью загружено: {FilePath}");
+                Debug.WriteLine($"✅ Small preview loaded: {FilePath}");
             }, DispatcherPriority.Background, ct);
         }
         catch (OperationCanceledException)
         {
-            // Игнорируем отмену
+            // Ignore cancellation
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Ошибка маленького превью {FilePath}: {ex.Message}");
+            Debug.WriteLine($"❌ Small preview error {FilePath}: {ex.Message}");
         }
         finally
         {
@@ -162,14 +162,14 @@ public class FileItem : INotifyPropertyChanged
         }
     }
 
-    // Загрузка большого превью
+    // Load large preview
     internal async Task LoadLargePreviewAsync(CancellationToken ct = default)
     {
         await _semaphore.WaitAsync(ct);
         try
         {
             ct.ThrowIfCancellationRequested();
-            Debug.WriteLine($"Загрузка большого превью: {FilePath}");
+            Debug.WriteLine($"Loading large preview: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
@@ -186,16 +186,16 @@ public class FileItem : INotifyPropertyChanged
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 LargePreview = bitmap;
-                Debug.WriteLine($"✅ Большое превью загружено: {FilePath}");
+                Debug.WriteLine($"✅ Large preview loaded: {FilePath}");
             }, DispatcherPriority.Background, ct);
         }
         catch (OperationCanceledException)
         {
-            // Игнорируем отмену
+            // Ignore cancellation
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Ошибка большого превью {FilePath}: {ex.Message}");
+            Debug.WriteLine($"❌ Large preview error {FilePath}: {ex.Message}");
         }
         finally
         {
@@ -213,14 +213,14 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
     public int DeletedCount { get; private set; }
     public int MovedCount { get; private set; }
 
-    // Источник токена для отмены
+    // Cancellation token source for cancelling loads
     private readonly CancellationTokenSource _cts = new();
 
-    // Свойства для StatusBar
+    // Properties for the status bar
     private int _totalFilesCount;
     private int _loadedFilesCount;
 
-    public string LoadingStatus => $"Загружено {_loadedFilesCount} из {_totalFilesCount} превью";
+    public string LoadingStatus => $"Loaded {_loadedFilesCount} of {_totalFilesCount} previews";
     public int TotalFilesCount
     {
         get => _totalFilesCount;
@@ -236,23 +236,23 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
     {
         Owner = owner;
         InitializeComponent();
-        DataContext = this; // Устанавливаем DataContext для привязки
+        DataContext = this; // Set DataContext for bindings
         SetupBindings(groups);
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _cts.Cancel(); // Отменяем все загрузки
+        _cts.Cancel(); // Cancel all loads
         _cts.Dispose();
         base.OnClosed(e);
     }
 
     private void SetupBindings(List<DuplicateGroup> groups)
     {
-        // Считаем общее количество файлов
+        // Compute total file count
         _totalFilesCount = groups.Sum(g => g.Files.Count);
         _loadedFilesCount = 0;
-        OnPropertyChanged(nameof(LoadingStatus)); // Обновляем статус
+        OnPropertyChanged(nameof(LoadingStatus)); // Update status
 
         var wrappedGroups = groups.Select(g =>
         {
@@ -265,7 +265,7 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
             for (int i = 0; i < sortedFiles.Count; i++)
             {
                 var filePath = sortedFiles[i].Path;
-                Debug.WriteLine($"Добавлен файл: {filePath}");
+                Debug.WriteLine($"Added file: {filePath}");
                 var item = new FileItem
                 {
                     FilePath = sortedFiles[i].Path,
@@ -338,7 +338,7 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
 
     private void OnImageMouseLeave(object sender, MouseEventArgs e)
     {
-        // Popup закроется автоматически
+        // Popup will close automatically
     }
 
     private async Task ProcessFilesAsync()
@@ -369,7 +369,7 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Ошибка перемещения {file.FileName}: {ex.Message}");
+                        MessageBox.Show($"Error moving {file.FileName}: {ex.Message}");
                     }
                 }
             }
