@@ -220,7 +220,7 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
     private int _totalFilesCount;
     private int _loadedFilesCount;
 
-    public string LoadingStatus => $"Loaded {_loadedFilesCount} of {_totalFilesCount} previews";
+    public string LoadingStatus => string.IsNullOrEmpty(_operationStatus) ? $"Loaded {_loadedFilesCount} of {_totalFilesCount} previews" : _operationStatus;
     public int TotalFilesCount
     {
         get => _totalFilesCount;
@@ -232,11 +232,15 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
         set { _loadedFilesCount = value; OnPropertyChanged(); }
     }
 
-    public DuplicateWindow(List<DuplicateGroup> groups, Window? owner = null)
+    private readonly string _rootFolder;
+    private string _operationStatus = string.Empty;
+
+    public DuplicateWindow(List<DuplicateGroup> groups, string rootFolder = "", Window? owner = null)
     {
         Owner = owner;
         InitializeComponent();
         DataContext = this; // Set DataContext for bindings
+        _rootFolder = string.IsNullOrEmpty(rootFolder) ? string.Empty : rootFolder;
         SetupBindings(groups);
     }
 
@@ -285,18 +289,38 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
         DataContext = new { DuplicateGroups = wrappedGroups };
     }
 
-    private async void DeleteSelected_Click(object sender, RoutedEventArgs e)
+    private void PreviewButton_Click(object sender, RoutedEventArgs e)
     {
-        await ProcessFilesAsync();
-        DialogResult = true;
-        Close();
+        if (sender is Button b && b.DataContext is FileItem item)
+        {
+            // Open a lightweight preview window
+            var pw = new PreviewWindow(item.FilePath) { Owner = this };
+            pw.ShowDialog();
+        }
     }
 
-    private async void MoveSelected_Click(object sender, RoutedEventArgs e)
+    private async void MoveToQuarantine_Click(object sender, RoutedEventArgs e)
     {
-        await ProcessFilesAsync();
-        DialogResult = true;
-        Close();
+        OperationStatus = "Подготовка к перемещению...";
+        OnPropertyChanged(nameof(LoadingStatus));
+
+        bool success = await ProcessFilesAsync(progressCallback: (moved, total, current) =>
+        {
+            OperationStatus = $"Перемещено {moved}/{total}: {Path.GetFileName(current ?? string.Empty)}";
+            OnPropertyChanged(nameof(LoadingStatus));
+            try { Dispatcher.Invoke(() => OperationStatusText.Text = OperationStatus); } catch { }
+        });
+
+        if (success)
+        {
+            MessageBox.Show($"Готово. Перемещено в карантин: {MovedCount} файлов", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+            DialogResult = true;
+            Close();
+        }
+        else
+        {
+            MessageBox.Show($"Операция завершилась с ошибками. Перемещено: {MovedCount} файлов", "Готово", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
@@ -341,10 +365,32 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
         // Popup will close automatically
     }
 
-    private async Task ProcessFilesAsync()
+    private async Task<bool> ProcessFilesAsync(Action<int,int,string?>? progressCallback = null)
     {
         var context = (dynamic)DataContext;
         var groups = (IEnumerable<GroupWrapper>)context.DuplicateGroups;
+
+        // Determine centralized quarantine folder
+        string quarantineRoot = _rootFolder;
+        if (string.IsNullOrEmpty(quarantineRoot))
+        {
+            // fallback: pick parent folder of first file
+            var first = groups.SelectMany(g => g.Items).FirstOrDefault()?.FilePath;
+            if (first != null)
+                quarantineRoot = Path.GetDirectoryName(first) ?? string.Empty;
+        }
+
+        if (string.IsNullOrEmpty(quarantineRoot))
+        {
+            MessageBox.Show("Не удалось определить корневую папку для карантина.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+
+        var quarantineDir = Path.Combine(quarantineRoot, $"Карантин_{DateTime.Now:yyyyMMdd_HHmm}");
+        Directory.CreateDirectory(quarantineDir);
+
+        int totalToMove = groups.SelectMany(g => g.Items).Count(it => it.IsSelected && File.Exists(it.FilePath));
+        int moved = 0;
 
         foreach (var group in groups)
         {
@@ -354,26 +400,30 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
                 {
                     try
                     {
-                        var dir = Path.GetDirectoryName(file.FilePath);
-                        if (string.IsNullOrEmpty(dir)) continue;
-
-                        var quarantine = Path.Combine(dir, $"Карантин_{DateTime.Now:yyyyMMdd_HHmm}");
-                        Directory.CreateDirectory(quarantine);
-                        var dest = Path.Combine(quarantine, Path.GetFileName(file.FilePath));
-
+                        var dest = Path.Combine(quarantineDir, Path.GetFileName(file.FilePath));
                         bool success = await TryMoveFileAsync(file.FilePath, dest);
                         if (success)
                         {
-                            MovedCount++;
+                            moved++;
+                            MovedCount = moved;
+                            progressCallback?.Invoke(moved, totalToMove, file.FilePath);
                         }
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error moving {file.FileName}: {ex.Message}");
+                        Debug.WriteLine($"Ошибка при перемещении {file.FilePath}: {ex.Message}");
                     }
                 }
             }
         }
+
+        return true;
+    }
+
+    public string OperationStatus
+    {
+        get => _operationStatus;
+        set { _operationStatus = value; OnPropertyChanged(); }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

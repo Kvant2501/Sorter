@@ -176,13 +176,40 @@
         </Style.Triggers>
     </Style>
 
+    <!-- RadioButton: custom template to make checked/unchecked visible across themes -->
     <Style TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Grid Width="18" Height="18" Margin="0,0,8,0">
+                            <Ellipse x:Name="Outer" Stroke="{DynamicResource BorderBrush}" Fill="{DynamicResource SurfaceBrush}" StrokeThickness="1"/>
+                            <Ellipse x:Name="Inner" Width="10" Height="10" Fill="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Inner" Property="Fill" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="Outer" Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Outer" Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
     </Style>
-</ResourceDictionary>
+
+</ResourceDictionary>

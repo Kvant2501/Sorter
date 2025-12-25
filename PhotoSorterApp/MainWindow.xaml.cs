@@ -198,15 +198,95 @@ public partial class MainWindow : Window
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
 
-        var (groups, deleted, moved) = await ViewDuplicatesInternalAsync(
-            vm.SortingOptions.SourceFolder,
-            vm.SortingOptions.IsRecursive,
-            vm.SelectedProfile,
-            _cts.Token);
+        // Show progress dialog for duplicate search so user sees activity (same UX as manual FindDuplicates)
+        var progressDialog = new ProgressDialog("Поиск дубликатов", "Сканирование папки...");
+        progressDialog.Owner = this;
 
-        if (groups > 0)
+        bool isCancelled = false;
+
+        void OnCancel(object? s, EventArgs args)
         {
-            vm.Logger.Log($"✅ Дубликаты: найдено групп — {groups}, удалено файлов — {deleted}, перемещено — {moved}", LogLevel.Info, "✅");
+            isCancelled = true;
+            _cts?.Cancel();
+            vm.Logger.Log("⚠️ Поиск дубликатов отменён пользователем.", LogLevel.Warning, "⚠️");
+        }
+
+        progressDialog.CancelRequested += OnCancel;
+
+        var progress = new Progress<(int processed, int total, string? current)>(t =>
+        {
+            try
+            {
+                if (t.total > 0)
+                    progressDialog.UpdateStatus($"Сканирование: {t.processed}/{t.total}");
+                else
+                    progressDialog.UpdateStatus($"Сканировано: {t.processed} файлов");
+
+                if (!string.IsNullOrEmpty(t.current))
+                    progressDialog.UpdateDetail(Path.GetFileName(t.current));
+            }
+            catch { }
+        });
+
+        try
+        {
+            progressDialog.Show();
+
+            List<DuplicateGroup>? duplicates = null;
+            try
+            {
+                duplicates = await Task.Run(() =>
+                {
+                    var service = ServiceLocator.CreateDuplicateDetectionService();
+                    var extensionsArray = SupportedFormats.GetExtensionsByProfile(vm.SelectedProfile);
+                    var extensions = new HashSet<string>(extensionsArray, StringComparer.OrdinalIgnoreCase);
+
+                    return service.FindDuplicatesWithExtensions(
+                        vm.SortingOptions.SourceFolder,
+                        vm.SortingOptions.IsRecursive,
+                        extensions,
+                        _cts.Token,
+                        progress);
+                }, _cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancellation already logged
+                return;
+            }
+
+            if (isCancelled)
+                return;
+
+            if (duplicates != null && duplicates.Count > 0)
+            {
+                progressDialog.Close();
+                var duplicateWindow = new DuplicateWindow(duplicates, vm.SortingOptions.SourceFolder, this);
+                if (duplicateWindow.ShowDialog() == true)
+                {
+                    vm.Logger.Log($"✅ Дубликаты: найдено групп — {duplicates.Count}, удалено файлов — {duplicateWindow.DeletedCount}, перемещено — {duplicateWindow.MovedCount}", LogLevel.Info, "✅");
+                }
+            }
+            else
+            {
+                progressDialog.Close();
+                MessageBox.Show("Дубликаты не найдены.", "Результат");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            vm.Logger.Log("⚠️ Поиск дубликатов отменён пользователем.", LogLevel.Warning, "⚠️");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ КРИТИЧЕСКАЯ ОШИБКА при поиске дубликатов: {ex.Message}");
+            vm.Logger.Log($"❌ Критическая ошибка поиска: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show($"Критическая ошибка: {ex.Message}\n\nДетали: {ex.StackTrace}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            progressDialog.CancelRequested -= OnCancel;
+            progressDialog.Close();
         }
     }
 
@@ -315,7 +395,7 @@ public partial class MainWindow : Window
             if (duplicates != null && duplicates.Count > 0)
             {
                 progressDialog.Close();
-                var duplicateWindow = new DuplicateWindow(duplicates, this);
+                var duplicateWindow = new DuplicateWindow(duplicates, vm.DuplicatesSearchFolder, this);
                 if (duplicateWindow.ShowDialog() == true)
                 {
                     vm.Logger.Log($"✅ Дубликаты: найдено групп — {duplicates.Count}, удалено файлов — {duplicateWindow.DeletedCount}, перемещено — {duplicateWindow.MovedCount}", LogLevel.Info, "✅");
@@ -420,7 +500,7 @@ public partial class MainWindow : Window
 
         if (loadSuccess && duplicates != null && duplicates.Count > 0)
         {
-            var duplicateWindow = new DuplicateWindow(duplicates, this);
+            var duplicateWindow = new DuplicateWindow(duplicates, folderPath, this);
             if (duplicateWindow.ShowDialog() == true)
             {
                 return (duplicates.Count, duplicateWindow.DeletedCount, duplicateWindow.MovedCount);

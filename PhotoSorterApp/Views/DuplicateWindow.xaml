@@ -16,7 +16,7 @@
             <!-- Для StatusBar -->
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Выберите файлы для удаления или перемещения. Первый файл в группе остаётся."
+        <TextBlock Text="Выберите файлы для перемещения в карантин. Первый файл в группе остаётся."
                    TextWrapping="Wrap" Margin="0,0,0,20" 
                    FontStyle="Italic" Foreground="{DynamicResource SubtleTextBrush}" FontSize="14"/>
 
@@ -52,11 +52,11 @@
                                                           Foreground="{DynamicResource PrimaryBrush}"/>
 
                                                 <Grid Width="80" Height="60" Margin="0,0,12,0">
-                                                    <Image x:Name="SmallPreview"
-                                                           Source="{Binding Preview}" 
-                                                           Stretch="Uniform"
-                                                           MouseEnter="OnImageMouseEnter"
-                                                           MouseLeave="OnImageMouseLeave"/>
+                                                    <Button Style="{StaticResource SecondaryButton}" Padding="0" BorderThickness="0" Background="Transparent" Click="PreviewButton_Click">
+                                                        <Image x:Name="SmallPreview"
+                                                               Source="{Binding Preview}" 
+                                                               Stretch="Uniform"/>
+                                                    </Button>
                                                     <TextBlock Text="Загрузка..." 
                                                                FontSize="12"
                                                                Foreground="{DynamicResource SubtleTextBrush}"
@@ -64,7 +64,7 @@
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"/>
 
-                                                    <!-- Popup с большим превью -->
+                                                    <!-- Popup с большим превью (mouse hover fallback) -->
                                                     <Popup Placement="Right"
                                                            PlacementTarget="{Binding ElementName=SmallPreview}"
                                                            IsOpen="{Binding IsMouseOver, ElementName=SmallPreview, Mode=OneWay}"
@@ -113,7 +113,7 @@
                            VerticalAlignment="Center"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right" Width="200">
-                <ProgressBar Value="{Binding LoadedFilesCount}" 
+                <ProgressBar x:Name="PreviewLoadProgress" Value="{Binding LoadedFilesCount}" 
                              Maximum="{Binding TotalFilesCount}" 
                              Height="14"
                              BorderThickness="0"
@@ -121,10 +121,10 @@
             </StatusBarItem>
         </StatusBar>
 
-        <!-- Кнопки -->
-        <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Style="{StaticResource PrimaryButton}" Content="Удалить выбранные" Click="DeleteSelected_Click" Margin="0,0,12,0"/>
-            <Button Style="{StaticResource SecondaryButton}" Content="Переместить..." Click="MoveSelected_Click" Margin="0,0,12,0"/>
+        <!-- Operation area: shows status and single action button -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="0,60,0,0"> 
+            <TextBlock x:Name="OperationStatusText" Text="" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource SubtleTextBrush}"/>
+            <Button Style="{StaticResource PrimaryButton}" Content="Переместить в Карантин" Click="MoveToQuarantine_Click" Margin="0,0,12,0"/>
             <Button Style="{StaticResource SecondaryButton}" Content="Закрыть" Click="Close_Click"/>
         </StackPanel>
     </Grid>

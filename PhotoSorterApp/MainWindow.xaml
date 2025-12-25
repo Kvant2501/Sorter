@@ -3,13 +3,22 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PhotoSorterApp.ViewModels"
         xmlns:models="clr-namespace:PhotoSorterApp.Models"
-        Title="PhotoSorter" Height="700" Width="900">
+        Title="PhotoSorter" Height="560" Width="820">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
     <Window.Resources>
+        <!-- Ensure ToolTips use theme brushes so they are readable in Dark theme -->
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="MaxWidth" Value="420" />
+        </Style>
+
         <!-- Style for small help icon -->
         <Style x:Key="HelpIconStyle" TargetType="TextBlock">
             <Setter Property="Text" Value="?"/>
@@ -323,18 +332,36 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Logger}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                                        <TextBlock Text="{Binding Icon}" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="{Binding Message}" Foreground="{Binding Color}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <!-- Styled ListBox for log output: supports alternating row backgrounds and uses theme brushes -->
+                    <ListBox ItemsSource="{Binding Logger}"
+                             Background="{DynamicResource SurfaceBrush}"
+                             Foreground="{DynamicResource TextBrush}"
+                             BorderThickness="0"
+                             AlternationCount="2"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="4" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Style.Triggers>
+                                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                                    <TextBlock Text="{Binding Icon}" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding Message}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
                     <Button Grid.Row="1" Content="Сохранить лог" Click="SaveLog_Click" 
                             Width="140" HorizontalAlignment="Right" Margin="0,10,0,0" FontWeight="Bold"/>
