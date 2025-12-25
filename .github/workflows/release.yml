@@ -87,9 +87,10 @@ jobs:
           Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipPath -Force
           Write-Host "Created zip: $zipPath"
 
-          # expose created asset path/name as step outputs
-          echo "zip_path=$zipPath" >> $GITHUB_OUTPUT
-          echo "zip_name=$zipName" >> $GITHUB_OUTPUT
+          # expose created asset path/name as step outputs (pwsh must write to $env:GITHUB_OUTPUT)
+          $outPath = $env:GITHUB_OUTPUT
+          Add-Content -Path $outPath -Value "zip_path=$zipPath"
+          Add-Content -Path $outPath -Value "zip_name=$zipName"
 
       - name: Create GitHub Release
         id: create_release
