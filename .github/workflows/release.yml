@@ -1,5 +1,11 @@
 name: Build and Release
 
+# Require write permission to create tags/releases via GITHUB_TOKEN
+permissions:
+  contents: write
+  packages: write
+  issues: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -22,6 +28,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
@@ -112,16 +121,24 @@ jobs:
 
   tag:
     runs-on: ubuntu-latest
+    needs: build-and-release
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Git Tag
         run: |
           git config user.name "github-action"
           git config user.email "action@github.com"
-          # create and push the tag
-          git tag -a ${{ github.event.inputs.version }} -m "Release ${{ github.event.inputs.version }}"
-          git push origin ${{ github.event.inputs.version }}
+          # create and push the tag (only if provided via workflow_dispatch)
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
+            git push origin "${{ github.event.inputs.version }}"
+          else
+            echo "No version input provided; skipping tag creation."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
