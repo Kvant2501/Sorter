@@ -22,4 +22,9 @@ public static class ServiceLocator
     /// По умолчанию создаёт экземпляр <see cref="PhotoSortingService"/>.
     /// </summary>
     public static Func<PhotoSortingService> CreatePhotoSortingService { get; set; } = () => new PhotoSortingService();
+
+    /// <summary>
+    /// Фабрика для создания сервиса сортировки документов.
+    /// </summary>
+    public static Func<DocumentSortingService> CreateDocumentSortingService { get; set; } = () => new DocumentSortingService();
 }

@@ -5,5 +5,5 @@ public enum FileTypeProfile
     PhotosOnly,
     VideosOnly,
     PhotosAndVideos,
-    AllSupported
+    DocumentsOnly
 }

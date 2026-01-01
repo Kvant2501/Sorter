@@ -69,7 +69,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -153,20 +152,40 @@
                         <RadioButton Content="Фото + видео" GroupName="FileType" 
                                      IsChecked="{Binding IsPhotosAndVideos}" 
                                      Checked="FileType_Checked" Tag="PhotosAndVideos" Margin="0,0,20,0"/>
-                        <RadioButton Content="Все" GroupName="FileType" 
-                                     IsChecked="{Binding IsAllSupported}" 
-                                     Checked="FileType_Checked" Tag="AllSupported" Margin="0,0,20,0"/>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="4" Text="Режим:" Style="{StaticResource HeaderText}" Margin="0,0,0,5"/>
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,25,0,10">
-                        <RadioButton Content="Только сортировка" GroupName="Mode" 
-                                     IsChecked="{Binding IsSortOnly}" Margin="0,0,20,0"/>
-                        <RadioButton Content="Сортировка + дубликаты" GroupName="Mode" 
-                                     IsChecked="{Binding IsSortAndDuplicates}" Margin="0,0,20,0"/>
+                    <Button x:Name="StartButton" Grid.Row="4" Content="Старт" Click="StartProcess_Click" 
+                            Width="80" Height="30" Margin="0,10,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Documents tab -->
+            <TabItem Header="Документы">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Button Content="Выбрать папку" Click="SelectDocumentsFolder_Click" 
+                            Width="150" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+
+                    <TextBox Grid.Row="1" Text="{Binding DocumentsSortingOptions.SourceFolder}" 
+                             Margin="0,0,0,10" Height="26" IsReadOnly="True"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                        <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding DocumentsSortingOptions.IsRecursive}" Margin="0,0,10,0"/>
+                        <CheckBox Content="Разбивать по месяцам" IsChecked="{Binding DocumentsSortingOptions.SplitByMonth}" Margin="20,0,10,0"/>
+                        <CheckBox Content="Создать бэкап" IsChecked="{Binding DocumentsSortingOptions.CreateBackup}" Margin="20,0,10,0"/>
                     </StackPanel>
 
-                    <Button x:Name="StartButton" Grid.Row="5" Content="Старт" Click="StartProcess_Click" 
+                    <TextBlock Grid.Row="3" Text="Структура: Расширение/Год/(Месяц)" Foreground="{DynamicResource SubtleTextBrush}" Margin="0,0,0,10"/>
+
+                    <Button Grid.Row="4" Content="Старт" Click="StartDocumentsSorting_Click" 
                             Width="80" Height="30" Margin="0,10,0,0"/>
                 </Grid>
             </TabItem>
@@ -177,6 +196,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -185,7 +205,6 @@
                         <TextBlock Text="{Binding DuplicatesSearchFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <!-- Recursive with tip -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
                         <CheckBox Content="Рекурсивно" IsChecked="{Binding IsDuplicatesRecursive}" Margin="0,0,10,0">
                             <CheckBox.ToolTip>
@@ -207,7 +226,15 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <Button Grid.Row="2" Content="Найти дубликаты" Click="FindDuplicates_Click" Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                    <TextBlock Grid.Row="2" Text="Тип файлов:" Style="{StaticResource HeaderText}" Margin="0,10,0,5"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,35,0,10">
+                        <RadioButton Content="Фото" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosOnly}" Margin="0,0,20,0"/>
+                        <RadioButton Content="Видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesVideosOnly}" Margin="0,0,20,0"/>
+                        <RadioButton Content="Фото + видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosAndVideos}" Margin="0,0,20,0"/>
+                        <RadioButton Content="Документы" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesDocumentsOnly}" Margin="0,0,20,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Row="3" Content="Найти дубликаты" Click="FindDuplicates_Click" Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
                 </Grid>
             </TabItem>
 

@@ -100,14 +100,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (vm.IsSortOnly)
-        {
-            await StartSortingOnly(vm);
-        }
-        else if (vm.IsSortAndDuplicates)
-        {
-            await StartSortingAndDuplicates(vm);
-        }
+        await StartSortingOnly(vm);
     }
 
     private async Task StartSortingOnly(MainViewModel vm)
@@ -187,44 +180,60 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task StartSortingAndDuplicates(MainViewModel vm)
+    #endregion
+
+    #region Tab: Documents
+
+    private void SelectDocumentsFolder_Click(object sender, RoutedEventArgs e)
     {
-        await StartSortingOnly(vm);
+        var dialog = new OpenFolderDialog();
+        if (dialog.ShowDialog())
+        {
+            if (DataContext is not MainViewModel vm) return;
 
-        vm.Logger.Log("Запуск поиска дубликатов...", LogLevel.Info);
+            vm.DocumentsSortingOptions = new SortingOptions
+            {
+                SourceFolder = dialog.FolderName ?? string.Empty,
+                IsRecursive = vm.DocumentsSortingOptions.IsRecursive,
+                SplitByMonth = vm.DocumentsSortingOptions.SplitByMonth,
+                CreateBackup = vm.DocumentsSortingOptions.CreateBackup
+            };
 
-        // Recreate CTS so user can cancel the whole pipeline
+            vm.Logger.Log($"📁 [Документы] Выбрана папка: {dialog.FolderName}", LogLevel.Info, "📁");
+        }
+    }
+
+    private async void StartDocumentsSorting_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        if (string.IsNullOrWhiteSpace(vm.DocumentsSortingOptions.SourceFolder))
+        {
+            MessageBox.Show("Выберите папку для сортировки документов.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        int movedFiles = 0;
+        var errors = new List<string>();
+
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
 
-        // Show progress dialog for duplicate search so user sees activity (same UX as manual FindDuplicates)
-        var progressDialog = new ProgressDialog("Поиск дубликатов", "Сканирование папки...");
+        var progressDialog = new ProgressDialog("Документы", "Начата сортировка документов...");
         progressDialog.Owner = this;
-
-        bool isCancelled = false;
 
         void OnCancel(object? s, EventArgs args)
         {
-            isCancelled = true;
             _cts?.Cancel();
-            vm.Logger.Log("⚠️ Поиск дубликатов отменён пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log("⚠️ Сортировка документов отменена пользователем.", LogLevel.Warning, "⚠️");
         }
 
         progressDialog.CancelRequested += OnCancel;
 
-        var progress = new Progress<(int processed, int total, string? current)>(t =>
+        var progress = new Progress<int>(percent =>
         {
-            try
-            {
-                if (t.total > 0)
-                    progressDialog.UpdateStatus($"Сканирование: {t.processed}/{t.total}");
-                else
-                    progressDialog.UpdateStatus($"Сканировано: {t.processed} файлов");
-
-                if (!string.IsNullOrEmpty(t.current))
-                    progressDialog.UpdateDetail(Path.GetFileName(t.current));
-            }
+            try { progressDialog.UpdateStatus($"Документы: {percent}%"); }
             catch { }
         });
 
@@ -232,56 +241,39 @@ public partial class MainWindow : Window
         {
             progressDialog.Show();
 
-            List<DuplicateGroup>? duplicates = null;
-            try
+            await Task.Run(() =>
             {
-                duplicates = await Task.Run(() =>
+                try
                 {
-                    var service = ServiceLocator.CreateDuplicateDetectionService();
-                    var extensionsArray = SupportedFormats.GetExtensionsByProfile(vm.SelectedProfile);
-                    var extensions = new HashSet<string>(extensionsArray, StringComparer.OrdinalIgnoreCase);
-
-                    return service.FindDuplicatesWithExtensions(
-                        vm.SortingOptions.SourceFolder,
-                        vm.SortingOptions.IsRecursive,
-                        extensions,
-                        _cts.Token,
-                        progress);
-                }, _cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                // Cancellation already logged
-                return;
-            }
-
-            if (isCancelled)
-                return;
-
-            if (duplicates != null && duplicates.Count > 0)
-            {
-                progressDialog.Close();
-                var duplicateWindow = new DuplicateWindow(duplicates, vm.SortingOptions.SourceFolder, this);
-                if (duplicateWindow.ShowDialog() == true)
-                {
-                    vm.Logger.Log($"✅ Дубликаты: найдено групп — {duplicates.Count}, удалено файлов — {duplicateWindow.DeletedCount}, перемещено — {duplicateWindow.MovedCount}", LogLevel.Info, "✅");
+                    var service = ServiceLocator.CreateDocumentSortingService();
+                    var result = service.SortDocuments(vm.DocumentsSortingOptions, progress, _cts.Token);
+                    movedFiles = result.MovedFiles;
+                    errors = result.Errors;
                 }
-            }
-            else
+                catch (OperationCanceledException)
+                {
+                    // Cancellation is expected
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Internal error: {ex.Message}");
+                }
+            }, _cts.Token);
+
+            if (!_cts.IsCancellationRequested)
             {
-                progressDialog.Close();
-                MessageBox.Show("Дубликаты не найдены.", "Результат");
+                vm.Logger.Log($"✅ Документы: сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
+                foreach (var error in errors)
+                    vm.Logger.Log(error, LogLevel.Error, "❌");
             }
         }
         catch (OperationCanceledException)
         {
-            vm.Logger.Log("⚠️ Поиск дубликатов отменён пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log("⚠️ Сортировка документов отменена пользователем.", LogLevel.Warning, "⚠️");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ КРИТИЧЕСКАЯ ОШИБКА при поиске дубликатов: {ex.Message}");
-            vm.Logger.Log($"❌ Критическая ошибка поиска: {ex.Message}", LogLevel.Error, "❌");
-            MessageBox.Show($"Критическая ошибка: {ex.Message}\n\nДетали: {ex.StackTrace}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            vm.Logger.Log($"❌ Документы: критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
         }
         finally
         {
@@ -367,7 +359,7 @@ public partial class MainWindow : Window
             var duplicatesTask = Task.Run(() =>
             {
                 var service = ServiceLocator.CreateDuplicateDetectionService();
-                var extensionsArray = SupportedFormats.GetExtensionsByProfile(vm.SelectedProfile);
+                var extensionsArray = SupportedFormats.GetExtensionsByProfile(vm.DuplicatesProfile);
                 var extensions = new HashSet<string>(extensionsArray, StringComparer.OrdinalIgnoreCase);
 
                 return service.FindDuplicatesWithExtensions(
@@ -728,32 +720,8 @@ public partial class MainWindow : Window
                     "PhotosOnly" => FileTypeProfile.PhotosOnly,
                     "VideosOnly" => FileTypeProfile.VideosOnly,
                     "PhotosAndVideos" => FileTypeProfile.PhotosAndVideos,
-                    "AllSupported" => FileTypeProfile.AllSupported,
                     _ => FileTypeProfile.PhotosOnly
                 };
-            }
-        }
-    }
-
-    private void Mode_Checked(object sender, RoutedEventArgs e)
-    {
-        if (sender is RadioButton rb)
-        {
-            if (rb.Tag as string == "SortOnly")
-            {
-                if (DataContext is MainViewModel vm)
-                {
-                    vm.IsSortOnly = true;
-                    vm.IsSortAndDuplicates = false;
-                }
-            }
-            else if (rb.Tag as string == "SortAndDuplicates")
-            {
-                if (DataContext is MainViewModel vm)
-                {
-                    vm.IsSortOnly = false;
-                    vm.IsSortAndDuplicates = true;
-                }
             }
         }
     }
@@ -811,7 +779,7 @@ public partial class MainWindow : Window
 
     private void About_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("PhotoSorter v1.0\nСортировка фото по дате и поиск дубликатов.", "О программе");
+        MessageBox.Show("PhotoSorter v1.0.2\nСортировка фото по дате и поиск дубликатов.", "О программе");
     }
 
     private void Formats_Click(object sender, RoutedEventArgs e)
@@ -819,9 +787,9 @@ public partial class MainWindow : Window
         var text = @"
 Поддерживаемые форматы:
 
-📸 Фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG и др.
+📸 Фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG
 🎥 Видео: MP4, MOV, AVI, MKV, WMV, M4V
-📄 Документы: PDF, DOCX, XLSX (для сортировки по дате)
+📄 Документы (на вкладке «Документы»): PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, RTF
 
 Дубликаты ищутся по содержимому (хеш SHA256).
 ";
@@ -877,25 +845,47 @@ public partial class MainWindow : Window
         <h2>2. Вкладка «Сортировка»</h2>
         <h3>Как это работает</h3>
         <ul>
-            <li>Программа ищет файлы по выбранному профилю (Фото / Видео / Все)</li>
-            <li>Определяет дату съёмки: сначала из EXIF, затем — дата создания файла</li>
+            <li>Программа сортирует выбранный тип файлов: <strong>Фото</strong>, <strong>Видео</strong> или <strong>Фото + видео</strong></li>
+            <li>Определяет дату: сначала из EXIF (если есть), затем — дата создания файла</li>
             <li>Создаёт структуру: <code>Год/</code> или <code>Год/Месяц/</code></li>
         </ul>
         <h3>Настройки</h3>
         <ul>
             <li><strong>Рекурсивный поиск</strong> — обрабатывать подпапки</li>
             <li><strong>Создать бэкап</strong> — копия исходной папки перед сортировкой</li>
-            <li><strong>Сортировка + дубликаты</strong> — автоматически запустить поиск дубликатов после сортировки</li>
         </ul>
     </div>
 
     <div class='section'>
-        <h2>3. Вкладка «Дубликаты»</h2>
+        <h2>3. Вкладка «Документы»</h2>
         <h3>Как это работает</h3>
         <ul>
-            <li>Поиск по <strong>содержимому файла</strong> (хеш SHA256)</li>
+            <li>Сортирует документы по расширениям (например: <code>PDF</code>, <code>DOCX</code>, <code>XLSX</code>)</li>
+            <li>Внутри каждой папки расширения создаёт структуру: <code>Год/</code> или <code>Год/Месяц/</code></li>
+            <li>Дата берётся из даты создания/изменения файла (если метаданные приложения недоступны)</li>
+        </ul>
+        <h3>Настройки</h3>
+        <ul>
+            <li><strong>Рекурсивный поиск</strong> — обрабатывать подпапки</li>
+            <li><strong>Разбивать по месяцам</strong> — <code>Год/Месяц</code></li>
+            <li><strong>Создать бэкап</strong> — копия исходной папки перед сортировкой</li>
+        </ul>
+    </div>
+
+    <div class='section'>
+        <h2>4. Вкладка «Дубликаты»</h2>
+        <h3>Как это работает</h3>
+        <ul>
+            <li>Поиск по <strong>содержимому файла</strong> (хеш SHA256) — подходит для фото, видео и документов</li>
             <li>В каждой группе файлы <strong>отсортированы по размеру</strong> (самый большой — первый)</li>
             <li>По умолчанию <strong>выбраны все, кроме первого</strong> (самого большого)</li>
+        </ul>
+        <h3>Выбор типа файлов</h3>
+        <ul>
+            <li><strong>Фото</strong> — ищет дубликаты только среди изображений</li>
+            <li><strong>Видео</strong> — только среди видео</li>
+            <li><strong>Фото + видео</strong> — среди медиафайлов</li>
+            <li><strong>Документы</strong> — среди офисных файлов (PDF/DOCX/XLSX/PPTX/TXT и т.д.)</li>
         </ul>
         <h3>Удаление</h3>
         <p>При удалении вы можете выбрать:</p>
@@ -906,7 +896,7 @@ public partial class MainWindow : Window
     </div>
 
     <div class='section'>
-        <h2>4. Вкладка «Переименование»</h2>
+        <h2>5. Вкладка «Переименование»</h2>
         <h3>Конструктор шаблонов</h3>
         <p>Собирайте имя файла из блоков:</p>
         <ul>
@@ -924,7 +914,7 @@ public partial class MainWindow : Window
     </div>
 
     <div class='section'>
-        <h2>5. Вкладка «Очистка»</h2>
+        <h2>6. Вкладка «Очистка»</h2>
         <p>Перемещает в Карантин:</p>
         <ul>
             <li><strong>Скриншоты</strong> — файлы с «screenshot», «скриншот», «capture» в имени</li>
@@ -934,17 +924,17 @@ public partial class MainWindow : Window
     </div>
 
     <div class='section'>
-        <h2>6. Поддерживаемые форматы</h2>
+        <h2>7. Поддерживаемые форматы</h2>
         <h3>📸 Фото</h3>
-        <p>JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG и др.</p>
+        <p>JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG</p>
         <h3>🎥 Видео</h3>
         <p>MP4, MOV, AVI, MKV, WMV, M4V</p>
         <h3>📄 Документы</h3>
-        <p>PDF, DOCX, XLSX, TXT</p>
+        <p>PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, RTF</p>
     </div>
 
     <div class='section'>
-        <h2>7. Безопасность и восстановление</h2>
+        <h2>8. Безопасность и восстановление</h2>
         <ul>
             <li>Все удалённые файлы — в папке <code>Карантин_...</code></li>
             <li>Бэкап создаётся как папка <code>Backup_...</code> рядом с исходной</li>
@@ -953,7 +943,7 @@ public partial class MainWindow : Window
     </div>
 
     <hr>
-    <p><em>PhotoSorter v1.0 — ваш надёжный архивариус</em></p>
+    <p><em>PhotoSorter v1.0.2 — ваш надёжный архивариус</em></p>
 </body>
 </html>";
     }

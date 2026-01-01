@@ -7,12 +7,9 @@ using System.ComponentModel;
 
 namespace PhotoSorterApp.ViewModels;
 
-/// <summary>
-/// Main window ViewModel — holds UI state and options for operations.
-/// </summary>
 public class MainViewModel : INotifyPropertyChanged
 {
-    // === Section: Sorting ===
+    // === Section: Sorting (Media) ===
     private SortingOptions _sortingOptions = new();
     public SortingOptions SortingOptions
     {
@@ -20,21 +17,15 @@ public class MainViewModel : INotifyPropertyChanged
         set { _sortingOptions = value; OnPropertyChanged(); }
     }
 
-    private bool _isSortOnly = true;
-    public bool IsSortOnly
+    // === Section: Sorting (Documents) ===
+    private SortingOptions _documentsSortingOptions = new();
+    public SortingOptions DocumentsSortingOptions
     {
-        get => _isSortOnly;
-        set { _isSortOnly = value; OnPropertyChanged(); }
+        get => _documentsSortingOptions;
+        set { _documentsSortingOptions = value; OnPropertyChanged(); }
     }
 
-    private bool _isSortAndDuplicates;
-    public bool IsSortAndDuplicates
-    {
-        get => _isSortAndDuplicates;
-        set { _isSortAndDuplicates = value; OnPropertyChanged(); }
-    }
-
-    // === Section: Duplicates ===
+    // === Duplicates ===
     private string? _duplicatesSearchFolder;
     public string? DuplicatesSearchFolder
     {
@@ -49,7 +40,46 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isDuplicatesRecursive = value; OnPropertyChanged(); }
     }
 
-    // === Section: Cleanup ===
+    private FileTypeProfile _duplicatesProfile = FileTypeProfile.PhotosOnly;
+    public FileTypeProfile DuplicatesProfile
+    {
+        get => _duplicatesProfile;
+        set
+        {
+            _duplicatesProfile = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsDuplicatesPhotosOnly));
+            OnPropertyChanged(nameof(IsDuplicatesVideosOnly));
+            OnPropertyChanged(nameof(IsDuplicatesPhotosAndVideos));
+            OnPropertyChanged(nameof(IsDuplicatesDocumentsOnly));
+        }
+    }
+
+    public bool IsDuplicatesPhotosOnly
+    {
+        get => DuplicatesProfile == FileTypeProfile.PhotosOnly;
+        set { if (value) DuplicatesProfile = FileTypeProfile.PhotosOnly; }
+    }
+
+    public bool IsDuplicatesVideosOnly
+    {
+        get => DuplicatesProfile == FileTypeProfile.VideosOnly;
+        set { if (value) DuplicatesProfile = FileTypeProfile.VideosOnly; }
+    }
+
+    public bool IsDuplicatesPhotosAndVideos
+    {
+        get => DuplicatesProfile == FileTypeProfile.PhotosAndVideos;
+        set { if (value) DuplicatesProfile = FileTypeProfile.PhotosAndVideos; }
+    }
+
+    public bool IsDuplicatesDocumentsOnly
+    {
+        get => DuplicatesProfile == FileTypeProfile.DocumentsOnly;
+        set { if (value) DuplicatesProfile = FileTypeProfile.DocumentsOnly; }
+    }
+
+    // === Cleanup ===
     private string? _cleanupFolder;
     public string? CleanupFolder
     {
@@ -85,7 +115,7 @@ public class MainViewModel : INotifyPropertyChanged
         set { _cleanupEmptyFiles = value; OnPropertyChanged(); }
     }
 
-    // === Section: Rename ===
+    // === Rename ===
     private string? _renameFolder;
     public string? RenameFolder
     {
@@ -107,12 +137,37 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isRenameRecursive = value; OnPropertyChanged(); }
     }
 
-    // === File profile ===
+    // === File profile (Media sorting) ===
     private FileTypeProfile _selectedProfile = FileTypeProfile.PhotosOnly;
     public FileTypeProfile SelectedProfile
     {
         get => _selectedProfile;
-        set { _selectedProfile = value; OnPropertyChanged(); }
+        set
+        {
+            _selectedProfile = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsPhotosOnly));
+            OnPropertyChanged(nameof(IsVideosOnly));
+            OnPropertyChanged(nameof(IsPhotosAndVideos));
+        }
+    }
+
+    public bool IsPhotosOnly
+    {
+        get => SelectedProfile == FileTypeProfile.PhotosOnly;
+        set { if (value) SelectedProfile = FileTypeProfile.PhotosOnly; }
+    }
+
+    public bool IsVideosOnly
+    {
+        get => SelectedProfile == FileTypeProfile.VideosOnly;
+        set { if (value) SelectedProfile = FileTypeProfile.VideosOnly; }
+    }
+
+    public bool IsPhotosAndVideos
+    {
+        get => SelectedProfile == FileTypeProfile.PhotosAndVideos;
+        set { if (value) SelectedProfile = FileTypeProfile.PhotosAndVideos; }
     }
 
     // === UI logging ===
