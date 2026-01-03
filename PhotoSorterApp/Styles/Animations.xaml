@@ -10,4 +10,27 @@
         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.25"/>
     </Storyboard>
 
+    <!-- Button micro-interactions -->
+    <Storyboard x:Key="ButtonPressDown">
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="0.98" Duration="0:0:0.06"/>
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="0.98" Duration="0:0:0.06"/>
+        <DoubleAnimation Storyboard.TargetName="BtnRoot" Storyboard.TargetProperty="Opacity" To="0.92" Duration="0:0:0.06"/>
+    </Storyboard>
+
+    <Storyboard x:Key="ButtonPressUp">
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.10"/>
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.10"/>
+        <DoubleAnimation Storyboard.TargetName="BtnRoot" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.10"/>
+    </Storyboard>
+
+    <Storyboard x:Key="ButtonHoverIn">
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="1.015" Duration="0:0:0.12"/>
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="1.015" Duration="0:0:0.12"/>
+    </Storyboard>
+
+    <Storyboard x:Key="ButtonHoverOut">
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
+        <DoubleAnimation Storyboard.TargetName="BtnScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.12"/>
+    </Storyboard>
+
 </ResourceDictionary>

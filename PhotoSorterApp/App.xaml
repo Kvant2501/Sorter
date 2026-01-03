@@ -8,10 +8,13 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Themes/Colors.Light.xaml"/>
                 <ResourceDictionary Source="/Themes/Brushes.xaml"/>
+                <ResourceDictionary Source="/Styles/Animations.xaml"/>
                 <ResourceDictionary Source="/Styles/Controls.xaml"/>
                 <ResourceDictionary Source="/Styles/Typography.xaml"/>
-                <ResourceDictionary Source="/Styles/Animations.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Base font -->
+            <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
 
             <!-- Map SystemColors keys to theme tokens so Menu popups and other system-drawn controls follow theme -->
             <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="{DynamicResource SurfaceColor}"/>
@@ -24,9 +27,13 @@
 
             <!-- Global Window style uses DynamicResource so theme can switch at runtime -->
             <Style TargetType="Window">
-                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            </Style>
+            <Style TargetType="Control">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="FontSize" Value="14"/>
             </Style>
 
             <!-- Default text styles and inputs are defined in Styles/Controls.xaml to keep resource organization consistent -->

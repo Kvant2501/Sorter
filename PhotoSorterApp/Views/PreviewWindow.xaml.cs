@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 
 namespace PhotoSorterApp.Views;
@@ -10,6 +12,38 @@ public partial class PreviewWindow : Window
     {
         InitializeComponent();
         Title = Path.GetFileName(filePath);
+
+        DocumentName.Text = Path.GetFileName(filePath);
+
+        var loaded = TryLoadImage(filePath);
+        if (!loaded)
+        {
+            try
+            {
+                var icon = System.Drawing.Icon.ExtractAssociatedIcon(filePath);
+                if (icon != null)
+                {
+                    DocumentIcon.Source = Imaging.CreateBitmapSourceFromHIcon(
+                        icon.Handle,
+                        Int32Rect.Empty,
+                        BitmapSizeOptions.FromWidthAndHeight(128, 128));
+                }
+            }
+            catch
+            {
+                // ignore icon errors
+            }
+
+            DocumentPreview.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            DocumentPreview.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private bool TryLoadImage(string filePath)
+    {
         try
         {
             var bitmap = new BitmapImage();
@@ -21,11 +55,14 @@ public partial class PreviewWindow : Window
                 bitmap.EndInit();
                 bitmap.Freeze();
             }
+
             PreviewImage.Source = bitmap;
+            return true;
         }
         catch
         {
-            // ignore preview errors
+            PreviewImage.Source = null;
+            return false;
         }
     }
 }

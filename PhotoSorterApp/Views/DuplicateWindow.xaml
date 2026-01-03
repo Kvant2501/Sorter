@@ -2,13 +2,15 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:PhotoSorterApp.Converters"
-        Title="Дубликаты" Height="700" Width="900">
+        Title="Дубликаты" Height="700" Width="900"
+        Background="{DynamicResource BackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Window.Resources>
 
-    <Grid Margin="20">
+    <Grid Margin="20" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -16,9 +18,12 @@
             <!-- Для StatusBar -->
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Выберите файлы для перемещения в карантин. Первый файл в группе остаётся."
-                   TextWrapping="Wrap" Margin="0,0,0,20" 
-                   FontStyle="Italic" Foreground="{DynamicResource SubtleTextBrush}" FontSize="14"/>
+        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <TextBlock Text="Выберите файлы для перемещения в карантин. Первый файл в группе остаётся."
+                       TextWrapping="Wrap"
+                       FontStyle="Italic"
+                       Foreground="{DynamicResource SubtleTextBrush}" FontSize="14"/>
+        </Border>
 
         <!-- ScrollViewer с прокруткой -->
         <ScrollViewer Grid.Row="1" 
@@ -48,23 +53,56 @@
                                                         Margin="0,0,0,10">
                                                 <CheckBox IsChecked="{Binding IsSelected}"
                                                           VerticalAlignment="Top" 
-                                                          Margin="0,4,12,0"
-                                                          Foreground="{DynamicResource PrimaryBrush}"/>
+                                                          Margin="0,4,12,0"/>
 
                                                 <Grid Width="80" Height="60" Margin="0,0,12,0">
                                                     <Button Style="{StaticResource SecondaryButton}" Padding="0" BorderThickness="0" Background="Transparent" Click="PreviewButton_Click">
-                                                        <Image x:Name="SmallPreview"
-                                                               Source="{Binding Preview}" 
-                                                               Stretch="Uniform"/>
-                                                    </Button>
-                                                    <TextBlock Text="Загрузка..." 
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource SubtleTextBrush}"
-                                                               Visibility="{Binding Preview, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
+                                                        <Grid>
+                                                            <Image x:Name="SmallPreview"
+                                                                   Source="{Binding Preview}" 
+                                                                   Stretch="Uniform"/>
 
-                                                    <!-- Popup с большим превью (mouse hover fallback) -->
+                                                            <!-- Fallback icon for non-images (Preview==null) -->
+                                                            <Image x:Name="DocIcon"
+                                                                   Source="{Binding DocumentIcon}"
+                                                                   Width="40" Height="40"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Preview}" Value="{x:Null}">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Image.Style>
+                                                            </Image>
+
+                                                            <!-- 'Загрузка...' только если нет ни Preview, ни Icon -->
+                                                            <TextBlock Text="Загрузка..."
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource SubtleTextBrush}"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Style.Triggers>
+                                                                            <MultiDataTrigger>
+                                                                                <MultiDataTrigger.Conditions>
+                                                                                    <Condition Binding="{Binding Preview}" Value="{x:Null}"/>
+                                                                                    <Condition Binding="{Binding DocumentIcon}" Value="{x:Null}"/>
+                                                                                </MultiDataTrigger.Conditions>
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </MultiDataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
+                                                    </Button>
+
                                                     <Popup Placement="Right"
                                                            PlacementTarget="{Binding ElementName=SmallPreview}"
                                                            IsOpen="{Binding IsMouseOver, ElementName=SmallPreview, Mode=OneWay}"

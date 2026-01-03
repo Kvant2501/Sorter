@@ -4,9 +4,17 @@
         Title="Preview" Height="600" Width="800">
     <Grid>
         <Border Style="{StaticResource Card}" Margin="10">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <Image x:Name="PreviewImage" Stretch="Uniform"/>
-            </ScrollViewer>
+            <Grid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <Image x:Name="PreviewImage" Stretch="Uniform"/>
+                </ScrollViewer>
+
+                <!-- Fallback for non-image files (documents): system icon + filename -->
+                <StackPanel x:Name="DocumentPreview" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image x:Name="DocumentIcon" Width="128" Height="128" Margin="0,0,0,12"/>
+                    <TextBlock x:Name="DocumentName" TextAlignment="Center" TextWrapping="Wrap" FontSize="16" FontWeight="SemiBold" />
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </Window>

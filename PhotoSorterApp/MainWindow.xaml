@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PhotoSorterApp.ViewModels"
         xmlns:models="clr-namespace:PhotoSorterApp.Models"
-        Title="PhotoSorter" Height="560" Width="820">
+        Title="PhotoSorter" Height="560" Width="820" ResizeMode="NoResize">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -66,96 +66,71 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Button Content="Выбрать папку" Click="SelectFolder_Click" 
-                            Width="150" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <TextBox Text="{Binding SortingOptions.SourceFolder}" Height="26" IsReadOnly="True" VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
 
-                    <TextBox Grid.Row="1" Text="{Binding SortingOptions.SourceFolder}" 
-                             Margin="0,0,0,10" Height="26" IsReadOnly="True"/>
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,18,10">
+                                    <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding SortingOptions.IsRecursive}" Margin="0,0,6,0"/>
+                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock TextWrapping="Wrap" MaxWidth="300">Обрабатывать все подпапки внутри выбранной папки.</TextBlock>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </StackPanel>
 
-                    <!-- Options with help icons -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
-                        <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding SortingOptions.IsRecursive}" 
-                                  Margin="0,0,10,0">
-                            <CheckBox.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Обрабатывать все подпапки внутри выбранной папки.
+                                <StackPanel Orientation="Horizontal" Margin="0,0,18,10">
+                                    <CheckBox Content="Разбивать по месяцам" IsChecked="{Binding SortingOptions.SplitByMonth}" Margin="0,0,6,0"/>
+                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock TextWrapping="Wrap" MaxWidth="300">Создавать подпапки по месяцам (Год/Месяц).</TextBlock>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
                                     </TextBlock>
-                                </ToolTip>
-                            </CheckBox.ToolTip>
-                        </CheckBox>
-                        <TextBlock Style="{DynamicResource HelpIconStyle}">
-                            <TextBlock.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Обрабатывать все подпапки внутри выбранной папки.
-                                    </TextBlock>
-                                </ToolTip>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
+                                </StackPanel>
 
-                        <CheckBox Content="Разбивать по месяцам" IsChecked="{Binding SortingOptions.SplitByMonth}" 
-                                  Margin="20,0,10,0">
-                            <CheckBox.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Создавать подпапки по месяцам (Год/Месяц).
+                                <StackPanel Orientation="Horizontal" Margin="0,0,18,10">
+                                    <CheckBox Content="Создать бэкап" IsChecked="{Binding SortingOptions.CreateBackup}" Margin="0,0,6,0"/>
+                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock TextWrapping="Wrap" MaxWidth="300">Перед сортировкой создать копию исходной папки.</TextBlock>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
                                     </TextBlock>
-                                </ToolTip>
-                            </CheckBox.ToolTip>
-                        </CheckBox>
-                        <TextBlock Style="{DynamicResource HelpIconStyle}">
-                            <TextBlock.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Создавать подпапки по месяцам (Год/Месяц).
-                                    </TextBlock>
-                                </ToolTip>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
+                                </StackPanel>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
 
-                        <CheckBox Content="Создать бэкап" IsChecked="{Binding SortingOptions.CreateBackup}" 
-                                  Margin="20,0,10,0">
-                            <CheckBox.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Перед сортировкой создать копию исходной папки.
-                                    </TextBlock>
-                                </ToolTip>
-                            </CheckBox.ToolTip>
-                        </CheckBox>
-                        <TextBlock Style="{DynamicResource HelpIconStyle}">
-                            <TextBlock.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Перед сортировкой создать копию исходной папки.
-                                    </TextBlock>
-                                </ToolTip>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
+                    <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock x:Name="LabelFileType" Text="Тип файлов" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <RadioButton Content="Только фото" GroupName="FileType" IsChecked="{Binding IsPhotosOnly}" Checked="FileType_Checked" Tag="PhotosOnly" Margin="0,0,20,10"/>
+                                <RadioButton Content="Только видео" GroupName="FileType" IsChecked="{Binding IsVideosOnly}" Checked="FileType_Checked" Tag="VideosOnly" Margin="0,0,20,10"/>
+                                <RadioButton Content="Фото + видео" GroupName="FileType" IsChecked="{Binding IsPhotosAndVideos}" Checked="FileType_Checked" Tag="PhotosAndVideos" Margin="0,0,20,10"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="StartButton" Style="{StaticResource PrimaryButton}" Content="Старт" Click="StartProcess_Click" Width="140"/>
                     </StackPanel>
-
-                    <TextBlock Grid.Row="3" x:Name="LabelFileType" Text="Тип файлов:" Style="{StaticResource HeaderText}" Margin="0,0,0,5"/>
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,25,0,10">
-                        <RadioButton Content="Только фото" GroupName="FileType" 
-                                     IsChecked="{Binding IsPhotosOnly}" 
-                                     Checked="FileType_Checked" Tag="PhotosOnly" Margin="0,0,20,0"/>
-                        <RadioButton Content="Только видео" GroupName="FileType" 
-                                     IsChecked="{Binding IsVideosOnly}" 
-                                     Checked="FileType_Checked" Tag="VideosOnly" Margin="0,0,20,0"/>
-                        <RadioButton Content="Фото + видео" GroupName="FileType" 
-                                     IsChecked="{Binding IsPhotosAndVideos}" 
-                                     Checked="FileType_Checked" Tag="PhotosAndVideos" Margin="0,0,20,0"/>
-                    </StackPanel>
-
-                    <Button x:Name="StartButton" Grid.Row="4" Content="Старт" Click="StartProcess_Click" 
-                            Width="80" Height="30" Margin="0,10,0,0"/>
                 </Grid>
             </TabItem>
 
@@ -166,27 +141,32 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Button Content="Выбрать папку" Click="SelectDocumentsFolder_Click" 
-                            Width="150" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectDocumentsFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <TextBox Text="{Binding DocumentsSortingOptions.SourceFolder}" Height="26" IsReadOnly="True" VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
 
-                    <TextBox Grid.Row="1" Text="{Binding DocumentsSortingOptions.SourceFolder}" 
-                             Margin="0,0,0,10" Height="26" IsReadOnly="True"/>
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding DocumentsSortingOptions.IsRecursive}" Margin="0,0,18,10"/>
+                                <CheckBox Content="Разбивать по месяцам" IsChecked="{Binding DocumentsSortingOptions.SplitByMonth}" Margin="0,0,18,10"/>
+                                <CheckBox Content="Создать бэкап" IsChecked="{Binding DocumentsSortingOptions.CreateBackup}" Margin="0,0,18,10"/>
+                            </WrapPanel>
+                            <TextBlock Text="Структура: Расширение/Год/(Месяц)" Foreground="{DynamicResource SubtleTextBrush}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
-                        <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding DocumentsSortingOptions.IsRecursive}" Margin="0,0,10,0"/>
-                        <CheckBox Content="Разбивать по месяцам" IsChecked="{Binding DocumentsSortingOptions.SplitByMonth}" Margin="20,0,10,0"/>
-                        <CheckBox Content="Создать бэкап" IsChecked="{Binding DocumentsSortingOptions.CreateBackup}" Margin="20,0,10,0"/>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource PrimaryButton}" Content="Старт" Click="StartDocumentsSorting_Click" Width="140"/>
                     </StackPanel>
-
-                    <TextBlock Grid.Row="3" Text="Структура: Расширение/Год/(Месяц)" Foreground="{DynamicResource SubtleTextBrush}" Margin="0,0,0,10"/>
-
-                    <Button Grid.Row="4" Content="Старт" Click="StartDocumentsSorting_Click" 
-                            Width="80" Height="30" Margin="0,10,0,0"/>
                 </Grid>
             </TabItem>
 
@@ -198,43 +178,55 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="Выбрать папку" Click="SelectDuplicatesFolder_Click" Width="150" Margin="0,0,10,0"/>
-                        <TextBlock Text="{Binding DuplicatesSearchFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectDuplicatesFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <Border Style="{StaticResource TextBoxLike}">
+                                <TextBlock Text="{Binding DuplicatesSearchFolder}" TextWrapping="Wrap"/>
+                            </Border>
+                        </DockPanel>
+                    </Border>
 
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
-                        <CheckBox Content="Рекурсивно" IsChecked="{Binding IsDuplicatesRecursive}" Margin="0,0,10,0">
-                            <CheckBox.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Искать дубликаты во всех подпапках.
-                                    </TextBlock>
-                                </ToolTip>
-                            </CheckBox.ToolTip>
-                        </CheckBox>
-                        <TextBlock Style="{DynamicResource HelpIconStyle}">
-                            <TextBlock.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Искать дубликаты во всех подпапках.
-                                    </TextBlock>
-                                </ToolTip>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
-                    </StackPanel>
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Content="Рекурсивно" IsChecked="{Binding IsDuplicatesRecursive}" Margin="0,0,10,0">
+                                    <CheckBox.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock TextWrapping="Wrap" MaxWidth="300">Искать дубликаты во всех подпапках.</TextBlock>
+                                        </ToolTip>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                                <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                    <TextBlock.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock TextWrapping="Wrap" MaxWidth="300">Искать дубликаты во всех подпапках.</TextBlock>
+                                        </ToolTip>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
 
-                    <TextBlock Grid.Row="2" Text="Тип файлов:" Style="{StaticResource HeaderText}" Margin="0,10,0,5"/>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,35,0,10">
-                        <RadioButton Content="Фото" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosOnly}" Margin="0,0,20,0"/>
-                        <RadioButton Content="Видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesVideosOnly}" Margin="0,0,20,0"/>
-                        <RadioButton Content="Фото + видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosAndVideos}" Margin="0,0,20,0"/>
-                        <RadioButton Content="Документы" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesDocumentsOnly}" Margin="0,0,20,0"/>
-                    </StackPanel>
+                    <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Тип файлов" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <RadioButton Content="Фото" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosOnly}" Margin="0,0,20,10"/>
+                                <RadioButton Content="Видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesVideosOnly}" Margin="0,0,20,10"/>
+                                <RadioButton Content="Фото + видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosAndVideos}" Margin="0,0,20,10"/>
+                                <RadioButton Content="Документы" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesDocumentsOnly}" Margin="0,0,20,10"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
 
-                    <Button Grid.Row="3" Content="Найти дубликаты" Click="FindDuplicates_Click" Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource PrimaryButton}" Content="Найти дубликаты" Click="FindDuplicates_Click" Width="180"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
 
@@ -246,42 +238,49 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="Выбрать папку" Click="SelectCleanupFolder_Click" Width="150" Margin="0,0,10,0"/>
-                        <TextBlock Text="{Binding CleanupFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectCleanupFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <Border Style="{StaticResource TextBoxLike}">
+                                <TextBlock Text="{Binding CleanupFolder}" TextWrapping="Wrap"/>
+                            </Border>
+                        </DockPanel>
+                    </Border>
 
-                    <!-- Recursive with tip -->
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
-                        <CheckBox Content="Рекурсивно" IsChecked="{Binding CleanupRecursive}" Margin="0,0,10,0">
-                            <CheckBox.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Очищать все подпапки.
-                                    </TextBlock>
-                                </ToolTip>
-                            </CheckBox.ToolTip>
-                        </CheckBox>
-                        <TextBlock Style="{DynamicResource HelpIconStyle}">
-                            <TextBlock.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Очищать все подпапки.
-                                    </TextBlock>
-                                </ToolTip>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
-                    </StackPanel>
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Content="Рекурсивно" IsChecked="{Binding CleanupRecursive}" Margin="0,0,10,0">
+                                    <CheckBox.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock TextWrapping="Wrap" MaxWidth="300">Очищать все подпапки.</TextBlock>
+                                        </ToolTip>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                                <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                    <TextBlock.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock TextWrapping="Wrap" MaxWidth="300">Очищать все подпапки.</TextBlock>
+                                        </ToolTip>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
+                            </StackPanel>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
-                        <CheckBox Content="Скриншоты" IsChecked="{Binding CleanupScreenshots}" Margin="0,0,20,0"/>
-                        <CheckBox Content="Временные файлы" IsChecked="{Binding CleanupTempFiles}" Margin="0,0,20,0"/>
-                        <CheckBox Content="Пустые файлы" IsChecked="{Binding CleanupEmptyFiles}" Margin="0,0,20,0"/>
-                    </StackPanel>
+                            <WrapPanel Margin="0,10,0,0">
+                                <CheckBox Content="Скриншоты" IsChecked="{Binding CleanupScreenshots}" Margin="0,0,18,10"/>
+                                <CheckBox Content="Временные файлы" IsChecked="{Binding CleanupTempFiles}" Margin="0,0,18,10"/>
+                                <CheckBox Content="Пустые файлы" IsChecked="{Binding CleanupEmptyFiles}" Margin="0,0,18,10"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
 
-                    <Button Grid.Row="3" Content="Старт очистки" Click="StartCleanup_Click" Width="150" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource PrimaryButton}" Content="Старт очистки" Click="StartCleanup_Click" Width="180"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
 
@@ -292,62 +291,64 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="Выбрать папку" Click="SelectRenameFolder_Click" Width="150" Margin="0,0,10,0"/>
-                        <TextBlock Text="{Binding RenameFolder}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectRenameFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <Border Style="{StaticResource TextBoxLike}">
+                                <TextBlock Text="{Binding RenameFolder}" TextWrapping="Wrap"/>
+                            </Border>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Content="Рекурсивно" IsChecked="{Binding IsRenameRecursive}" Margin="0,0,10,0">
+                                    <CheckBox.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock TextWrapping="Wrap" MaxWidth="300">Переименовывать файлы во всех подпапках.</TextBlock>
+                                        </ToolTip>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                                <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                    <TextBlock.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock TextWrapping="Wrap" MaxWidth="300">Переименовывать файлы во всех подпапках.</TextBlock>
+                                        </ToolTip>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,6">
+                        <StackPanel>
+                            <TextBlock Text="Шаблон" Style="{StaticResource HeaderText}" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding RenameTemplates}" SelectedItem="{Binding SelectedRenameTemplate}" MinWidth="300"/>
+                            <TextBox Text="{Binding RenamePattern, UpdateSourceTrigger=PropertyChanged}" Margin="0,6,0,4" MinWidth="300" Height="26"/>
+
+                            <WrapPanel Margin="0,0,0,4">
+                                <Button Content="Год" Tag="{}{year}" Click="InsertBlock_Click" Margin="0,0,8,6"/>
+                                <Button Content="Месяц" Tag="{}{month}" Click="InsertBlock_Click" Margin="0,0,8,6"/>
+                                <Button Content="День" Tag="{}{day}" Click="InsertBlock_Click" Margin="0,0,8,6"/>
+                                <Button Content="Дата" Tag="{}{date}" Click="InsertBlock_Click" Margin="0,0,8,6"/>
+                                <Button Content="Счётчик" Tag="{}{index}" Click="InsertBlock_Click" Margin="0,0,8,6"/>
+                                <Button Content="Имя" Tag="{}{name}" Click="InsertBlock_Click" Margin="0,0,8,6"/>
+                                <Button Content="Текст..." Click="InsertCustomText_Click" Margin="0,0,8,6"/>
+                            </WrapPanel>
+
+                            <TextBlock Text="{Binding RenamePreview}" FontStyle="Italic" Foreground="{DynamicResource SubtleTextBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Content="Переименовать" Click="ApplyRename_Click" Width="160"/>
                     </StackPanel>
-
-                    <!-- Recursive with tip -->
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
-                        <CheckBox Content="Рекурсивно" IsChecked="{Binding IsRenameRecursive}" Margin="0,0,10,0">
-                            <CheckBox.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Переименовывать файлы во всех подпапках.
-                                    </TextBlock>
-                                </ToolTip>
-                            </CheckBox.ToolTip>
-                        </CheckBox>
-                        <TextBlock Style="{DynamicResource HelpIconStyle}">
-                            <TextBlock.ToolTip>
-                                <ToolTip>
-                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">
-                                        Переименовывать файлы во всех подпапках.
-                                    </TextBlock>
-                                </ToolTip>
-                            </TextBlock.ToolTip>
-                        </TextBlock>
-                    </StackPanel>
-
-                    <ComboBox Grid.Row="2" ItemsSource="{Binding RenameTemplates}" 
-                              SelectedItem="{Binding SelectedRenameTemplate}"
-                              Margin="0,10,0,0" MinWidth="300"/>
-
-                    <TextBox Grid.Row="3" Text="{Binding RenamePattern, UpdateSourceTrigger=PropertyChanged}" 
-                             Margin="0,10,0,0" MinWidth="300" Height="26"/>
-
-                    <WrapPanel Grid.Row="4" Margin="0,10,0,0">
-                        <Button Content="Год" Tag="{}{year}" Click="InsertBlock_Click" Margin="2"/>
-                        <Button Content="Месяц" Tag="{}{month}" Click="InsertBlock_Click" Margin="2"/>
-                        <Button Content="День" Tag="{}{day}" Click="InsertBlock_Click" Margin="2"/>
-                        <Button Content="Дата" Tag="{}{date}" Click="InsertBlock_Click" Margin="2"/>
-                        <Button Content="Счётчик" Tag="{}{index}" Click="InsertBlock_Click" Margin="2"/>
-                        <Button Content="Имя" Tag="{}{name}" Click="InsertBlock_Click" Margin="2"/>
-                        <Button Content="Текст..." Click="InsertCustomText_Click" Margin="2"/>
-                    </WrapPanel>
-
-                    <TextBlock Grid.Row="5" Text="{Binding RenamePreview}" 
-                               FontStyle="Italic" Foreground="{DynamicResource SubtleTextBrush}" Margin="0,10,0,0"
-                               TextWrapping="Wrap"/>
-
-                    <Button Grid.Row="6" Content="Применить" Click="ApplyRename_Click" 
-                            Width="100" HorizontalAlignment="Left" Margin="0,10,0,0"/>
                 </Grid>
             </TabItem>
 
@@ -360,7 +361,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Styled ListBox for log output: supports alternating row backgrounds and uses theme brushes -->
-                    <ListBox ItemsSource="{Binding Logger}"
+                    <ListBox Grid.Row="0" ItemsSource="{Binding Logger}"
                              Background="{DynamicResource SurfaceBrush}"
                              Foreground="{DynamicResource TextBrush}"
                              BorderThickness="0"
@@ -390,8 +391,9 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button Grid.Row="1" Content="Сохранить лог" Click="SaveLog_Click" 
-                            Width="140" HorizontalAlignment="Right" Margin="0,10,0,0" FontWeight="Bold"/>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="Сохранить лог" Click="SaveLog_Click" Width="160" FontWeight="Bold"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>

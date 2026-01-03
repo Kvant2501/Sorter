@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -26,6 +27,24 @@ public class GroupWrapper
 
 public class FileItem : INotifyPropertyChanged
 {
+    private static readonly HashSet<string> _supportedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif", ".webp"
+    };
+
+    private static bool IsImageFile(string path)
+    {
+        try
+        {
+            var ext = Path.GetExtension(path);
+            return !string.IsNullOrWhiteSpace(ext) && _supportedImageExtensions.Contains(ext);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private string _filePath = string.Empty;
     public string FilePath
     {
@@ -35,8 +54,33 @@ public class FileItem : INotifyPropertyChanged
             _filePath = value;
             if (!string.IsNullOrEmpty(value))
             {
-                Debug.WriteLine($"File: {value}, Extension: {Path.GetExtension(value)}");
+                DocumentIcon = GetSystemFileIcon(value);
             }
+        }
+    }
+
+    private BitmapSource? _documentIcon;
+    public BitmapSource? DocumentIcon
+    {
+        get => _documentIcon;
+        private set { _documentIcon = value; OnPropertyChanged(); }
+    }
+
+    private static BitmapSource? GetSystemFileIcon(string filePath)
+    {
+        try
+        {
+            var icon = System.Drawing.Icon.ExtractAssociatedIcon(filePath);
+            if (icon == null) return null;
+
+            return Imaging.CreateBitmapSourceFromHIcon(
+                icon.Handle,
+                Int32Rect.Empty,
+                BitmapSizeOptions.FromWidthAndHeight(48, 48));
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -79,6 +123,15 @@ public class FileItem : INotifyPropertyChanged
             if (_preview == null && !_previewLoaded)
             {
                 _previewLoaded = true;
+
+                // For documents/non-images: use icon only, no preview loading
+                if (!IsImageFile(FilePath))
+                {
+                    _preview = null;
+                    PreviewLoaded?.Invoke();
+                    return _preview;
+                }
+
                 _ = LoadPreviewAsync();
             }
             return _preview;
@@ -97,6 +150,11 @@ public class FileItem : INotifyPropertyChanged
             if (_largePreview == null && !_largePreviewLoaded)
             {
                 _largePreviewLoaded = true;
+
+                // For documents/non-images: no large preview
+                if (!IsImageFile(FilePath))
+                    return null;
+
                 _ = LoadLargePreviewAsync();
             }
             return _largePreview;
@@ -115,7 +173,6 @@ public class FileItem : INotifyPropertyChanged
 
     // Limit: maximum 3 concurrent loads
     private static readonly SemaphoreSlim _semaphore = new(3, 3);
-    private static readonly CancellationTokenSource _cts = new();
 
     // Preview loaded event
     public event Action? PreviewLoaded;
@@ -123,11 +180,17 @@ public class FileItem : INotifyPropertyChanged
     // Load small preview
     internal async Task LoadPreviewAsync(CancellationToken ct = default)
     {
+        // Guard: only images
+        if (!IsImageFile(FilePath))
+        {
+            PreviewLoaded?.Invoke();
+            return;
+        }
+
         await _semaphore.WaitAsync(ct);
         try
         {
             ct.ThrowIfCancellationRequested();
-            Debug.WriteLine($"Loading small preview: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
@@ -145,16 +208,19 @@ public class FileItem : INotifyPropertyChanged
             {
                 Preview = bitmap;
                 PreviewLoaded?.Invoke();
-                Debug.WriteLine($"✅ Small preview loaded: {FilePath}");
             }, DispatcherPriority.Background, ct);
         }
         catch (OperationCanceledException)
         {
             // Ignore cancellation
         }
-        catch (Exception ex)
+        catch
         {
-            Debug.WriteLine($"❌ Small preview error {FilePath}: {ex.Message}");
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                Preview = null;
+                PreviewLoaded?.Invoke();
+            }, DispatcherPriority.Background);
         }
         finally
         {
@@ -165,11 +231,14 @@ public class FileItem : INotifyPropertyChanged
     // Load large preview
     internal async Task LoadLargePreviewAsync(CancellationToken ct = default)
     {
+        // Guard: only images
+        if (!IsImageFile(FilePath))
+            return;
+
         await _semaphore.WaitAsync(ct);
         try
         {
             ct.ThrowIfCancellationRequested();
-            Debug.WriteLine($"Loading large preview: {FilePath}");
 
             using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
@@ -186,16 +255,15 @@ public class FileItem : INotifyPropertyChanged
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 LargePreview = bitmap;
-                Debug.WriteLine($"✅ Large preview loaded: {FilePath}");
             }, DispatcherPriority.Background, ct);
         }
         catch (OperationCanceledException)
         {
             // Ignore cancellation
         }
-        catch (Exception ex)
+        catch
         {
-            Debug.WriteLine($"❌ Large preview error {FilePath}: {ex.Message}");
+            // ignore
         }
         finally
         {
@@ -268,8 +336,6 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
             var items = new List<FileItem>();
             for (int i = 0; i < sortedFiles.Count; i++)
             {
-                var filePath = sortedFiles[i].Path;
-                Debug.WriteLine($"Added file: {filePath}");
                 var item = new FileItem
                 {
                     FilePath = sortedFiles[i].Path,
@@ -365,7 +431,7 @@ public partial class DuplicateWindow : Window, INotifyPropertyChanged
         // Popup will close automatically
     }
 
-    private async Task<bool> ProcessFilesAsync(Action<int,int,string?>? progressCallback = null)
+    private async Task<bool> ProcessFilesAsync(Action<int, int, string?>? progressCallback = null)
     {
         var context = (dynamic)DataContext;
         var groups = (IEnumerable<GroupWrapper>)context.DuplicateGroups;
