@@ -16,7 +16,18 @@
                         <Border.RenderTransform>
                             <ScaleTransform x:Name="BtnScale" ScaleX="1" ScaleY="1"/>
                         </Border.RenderTransform>
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                        <ContentPresenter x:Name="BtnContent"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True">
+                            <ContentPresenter.ContentTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}, Path=TemplatedParent.Foreground}"/>
+                                </DataTemplate>
+                            </ContentPresenter.ContentTemplate>
+                        </ContentPresenter>
                     </Border>
 
                     <ControlTemplate.Triggers>
@@ -182,7 +193,16 @@
                                           ContentSource="Header"
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
-                                          RecognizesAccessKey="True"/>
+                                          RecognizesAccessKey="True">
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=Foreground}" />
+                                </Style>
+                                <Style TargetType="Run">
+                                    <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=Foreground}" />
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">

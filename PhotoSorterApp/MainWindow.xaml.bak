@@ -121,57 +121,51 @@
                         <StackPanel>
                             <TextBlock x:Name="LabelFileType" Text="Тип файлов" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
                             <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Только фото" GroupName="FileType" IsChecked="{Binding IsPhotosOnly}" Checked="FileType_Checked" Tag="PhotosOnly"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Расширения фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Только видео" GroupName="FileType" IsChecked="{Binding IsVideosOnly}" Checked="FileType_Checked" Tag="VideosOnly"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Расширения видео: MP4, MOV, AVI, MKV, WMV, M4V</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Фото + видео" GroupName="FileType" IsChecked="{Binding IsPhotosAndVideos}" Checked="FileType_Checked" Tag="PhotosAndVideos"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG
-Видео: MP4, MOV, AVI, MKV, WMV, M4V</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Документы" GroupName="FileType" Checked="FileType_Checked" Tag="DocumentsOnly"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Расширения документов: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
+                                <RadioButton Content="Только фото" GroupName="FileType" IsChecked="{Binding IsPhotosOnly}" Checked="FileType_Checked" Tag="PhotosOnly" Margin="0,0,20,10"/>
+                                <RadioButton Content="Только видео" GroupName="FileType" IsChecked="{Binding IsVideosOnly}" Checked="FileType_Checked" Tag="VideosOnly" Margin="0,0,20,10"/>
+                                <RadioButton Content="Фото + видео" GroupName="FileType" IsChecked="{Binding IsPhotosAndVideos}" Checked="FileType_Checked" Tag="PhotosAndVideos" Margin="0,0,20,10"/>
                             </WrapPanel>
                         </StackPanel>
                     </Border>
 
                     <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="StartButton" Style="{StaticResource PrimaryButton}" Content="Старт" Click="StartProcess_Click" Width="140"
-                                Foreground="{DynamicResource TextOnPrimaryBrush}"/>
+                        <Button x:Name="StartButton" Style="{StaticResource PrimaryButton}" Content="Старт" Click="StartProcess_Click" Width="140"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Documents tab -->
+            <TabItem Header="Документы">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectDocumentsFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <TextBox Text="{Binding DocumentsSortingOptions.SourceFolder}" Height="26" IsReadOnly="True" VerticalContentAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <CheckBox Content="Рекурсивный поиск" IsChecked="{Binding DocumentsSortingOptions.IsRecursive}" Margin="0,0,18,10"/>
+                                <CheckBox Content="Разбивать по месяцам" IsChecked="{Binding DocumentsSortingOptions.SplitByMonth}" Margin="0,0,18,10"/>
+                                <CheckBox Content="Создать бэкап" IsChecked="{Binding DocumentsSortingOptions.CreateBackup}" Margin="0,0,18,10"/>
+                            </WrapPanel>
+                            <TextBlock Text="Структура: Расширение/Год/(Месяц)" Foreground="{DynamicResource SubtleTextBrush}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource PrimaryButton}" Content="Старт" Click="StartDocumentsSorting_Click" Width="140"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -222,50 +216,10 @@
                         <StackPanel>
                             <TextBlock Text="Тип файлов" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
                             <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Фото" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosOnly}" Margin="0"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Расширения фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesVideosOnly}" Margin="0"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Расширения видео: MP4, MOV, AVI, MKV, WMV, M4V</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Фото + видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosAndVideos}" Margin="0"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG
-Видео: MP4, MOV, AVI, MKV, WMV, M4V</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
-                                    <RadioButton Content="Документы" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesDocumentsOnly}" Margin="0"/>
-                                    <TextBlock Style="{DynamicResource HelpIconStyle}">
-                                        <TextBlock.ToolTip>
-                                            <ToolTip>
-                                                <TextBlock TextWrapping="Wrap" MaxWidth="380">Расширения документов: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF</TextBlock>
-                                            </ToolTip>
-                                        </TextBlock.ToolTip>
-                                    </TextBlock>
-                                </StackPanel>
+                                <RadioButton Content="Фото" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosOnly}" Margin="0,0,20,10"/>
+                                <RadioButton Content="Видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesVideosOnly}" Margin="0,0,20,10"/>
+                                <RadioButton Content="Фото + видео" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesPhotosAndVideos}" Margin="0,0,20,10"/>
+                                <RadioButton Content="Документы" GroupName="DupFileType" IsChecked="{Binding IsDuplicatesDocumentsOnly}" Margin="0,0,20,10"/>
                             </WrapPanel>
                         </StackPanel>
                     </Border>
@@ -439,60 +393,6 @@
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                         <Button Content="Сохранить лог" Click="SaveLog_Click" Width="160" FontWeight="Bold"/>
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-
-            <!-- NEW: Catalog tab -->
-            <TabItem Header="Каталог">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
-                        <StackPanel>
-                            <TextBlock Text="HTML каталог директории" Style="{StaticResource HeaderText}" Margin="0,0,0,6"/>
-                            <TextBlock Text="Создайте красивый HTML-каталог с иерархией папок и файлов. Отличный способ документировать медиатеку!" TextWrapping="Wrap" Foreground="{DynamicResource SubtleTextBrush}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="1" Style="{StaticResource CardCompact}">
-                        <DockPanel LastChildFill="True">
-                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectCatalogFolder_Click" Width="150" Margin="0,0,10,0"/>
-                            <Border Style="{StaticResource TextBoxLike}">
-                                <TextBlock Text="{Binding CatalogFolder, FallbackValue=Не выбрана}" TextWrapping="Wrap"/>
-                            </Border>
-                        </DockPanel>
-                    </Border>
-
-                    <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,12">
-                        <StackPanel>
-                            <TextBlock Text="Параметры каталога" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
-                            <CheckBox x:Name="CatalogIncludeFilesCheckBox" Content="Включить файлы" IsChecked="True" Margin="0,0,0,8">
-                                <CheckBox.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock TextWrapping="Wrap" MaxWidth="300">Показывать файлы в каталоге (только папки, если выключено).</TextBlock>
-                                    </ToolTip>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            <CheckBox x:Name="CatalogIncludeSizeCheckBox" Content="Показывать размеры файлов" IsChecked="True" Margin="0,0,0,8">
-                                <CheckBox.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock TextWrapping="Wrap" MaxWidth="300">Отображать размер каждого файла.</TextBlock>
-                                    </ToolTip>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            <TextBlock Text="💡 Каталог будет сохранён в выбранной папке как catalog.html" Foreground="{DynamicResource SubtleTextBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Style="{StaticResource PrimaryButton}" Content="Создать каталог" Click="GenerateCatalog_Click" Width="180"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

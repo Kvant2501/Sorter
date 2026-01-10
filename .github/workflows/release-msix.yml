@@ -1,0 +1,90 @@
+name: Release (MSIX)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to create (e.g. v2.0.0). If empty, will use the current tag or commit SHA.'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-msix:
+    runs-on: windows-latest
+
+    env:
+      CONFIGURATION: Release
+      RID: win-x64
+      PLATFORM: x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c $env:CONFIGURATION --no-restore
+
+      - name: Publish (fallback ZIP)
+        run: dotnet publish .\PhotoSorterApp\PhotoSorterApp.csproj -c $env:CONFIGURATION -r $env:RID --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true
+
+      - name: Build MSIX (requires .wapproj)
+        shell: pwsh
+        run: |
+          $pkgProj = Get-ChildItem -Path . -Recurse -Filter *.wapproj | Select-Object -First 1
+          if (-not $pkgProj) {
+            Write-Error "MSIX packaging project (.wapproj) not found. Add a Windows Application Packaging Project (.wapproj) to enable MSIX." 
+          }
+
+          # On GitHub-hosted runners MSBuild from VS 2022 Community is available
+          $msbuild = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+          if (-not (Test-Path $msbuild)) { $msbuild = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" }
+          if (-not (Test-Path $msbuild)) { $msbuild = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" }
+          if (-not (Test-Path $msbuild)) { throw "MSBuild from Visual Studio 2022 not found on runner" }
+
+          & $msbuild $pkgProj.FullName /restore /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly /p:GenerateAppInstallerFile=false
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+
+          # ZIP fallback artifact
+          $published = Get-ChildItem -Path . -Recurse -Directory | Where-Object { $_.FullName -like "*\\bin\\$env:CONFIGURATION\\net8.0-windows\\$env:RID\\publish" } | Select-Object -First 1
+          if ($published) {
+            Compress-Archive -Path (Join-Path $published.FullName '*') -DestinationPath (Join-Path 'artifacts' "PhotoSorterApp_${env:RID}.zip") -Force
+          }
+
+          # MSIX artifacts
+          $msix = Get-ChildItem -Path . -Recurse -Include *.msix,*.msixbundle -ErrorAction SilentlyContinue
+          if (-not $msix) {
+            Write-Error "MSIX output not found after building .wapproj. Ensure the packaging project produces .msix/.msixbundle." 
+          }
+
+          foreach ($f in $msix) {
+            Copy-Item $f.FullName -Destination artifacts -Force
+          }
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}
+          name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/*

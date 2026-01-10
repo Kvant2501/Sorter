@@ -11,6 +11,13 @@ namespace PhotoSorterApp.Services;
 
 public class DocumentSortingService
 {
+    private readonly Action<string>? _logger;
+
+    public DocumentSortingService(Action<string>? logger = null)
+    {
+        _logger = logger;
+    }
+
     public (int MovedFiles, List<string> Errors) SortDocuments(
         SortingOptions options,
         IProgress<int>? progressPercent,
@@ -19,6 +26,8 @@ public class DocumentSortingService
         if (string.IsNullOrWhiteSpace(options.SourceFolder))
             throw new ArgumentException("Source folder is required.", nameof(options));
 
+        _logger?.Invoke($"?? Начало сортировки документов: {options.SourceFolder}");
+
         var extensions = SupportedFormats.GetExtensionsByProfile(FileTypeProfile.DocumentsOnly);
         var extSet = new HashSet<string>(extensions, StringComparer.OrdinalIgnoreCase);
 
@@ -26,25 +35,33 @@ public class DocumentSortingService
 
         var allFiles = Directory.EnumerateFiles(options.SourceFolder, "*.*", searchOption)
             .Where(f => extSet.Contains(Path.GetExtension(f)))
-            // не трогаем уже отсортированные папки верхнего уровня (PDF/DOCX/...)
             .Where(f => !IsInsideDocumentCategoryFolder(options.SourceFolder, f))
             .ToList();
 
         var errors = new List<string>();
 
         if (allFiles.Count == 0)
+        {
+            _logger?.Invoke("?? Документов для сортировки не найдено");
             return (0, errors);
+        }
+
+        _logger?.Invoke($"?? Найдено документов: {allFiles.Count}");
 
         if (options.CreateBackup)
         {
+            _logger?.Invoke("?? Создание резервной копии...");
             var backupDir = Path.Combine(options.SourceFolder, $"Backup_{DateTime.Now:yyyyMMdd_HHmm}");
             try
             {
                 CopyDirectory(options.SourceFolder, backupDir, excludeDirs: new[] { backupDir });
+                _logger?.Invoke($"? Backup создан: {backupDir}");
             }
             catch (Exception ex)
             {
-                errors.Add($"Backup creation error: {ex.Message}");
+                var error = $"? Ошибка создания backup: {ex.Message}";
+                errors.Add(error);
+                _logger?.Invoke(error);
             }
         }
 
@@ -55,7 +72,10 @@ public class DocumentSortingService
         foreach (var file in allFiles)
         {
             if (cancellationToken.IsCancellationRequested)
+            {
+                _logger?.Invoke("?? Сортировка документов отменена пользователем");
                 break;
+            }
 
             try
             {
@@ -86,16 +106,20 @@ public class DocumentSortingService
 
                 File.Move(file, destFile);
                 moved++;
+                _logger?.Invoke($"?? Перемещён: {Path.GetFileName(file)} ? {Path.GetRelativePath(options.SourceFolder, destFile)}");
             }
             catch (Exception ex)
             {
-                errors.Add($"Error processing {file}: {ex.Message}");
+                var error = $"? Ошибка обработки {Path.GetFileName(file)}: {ex.Message}";
+                errors.Add(error);
+                _logger?.Invoke(error);
             }
 
             processed++;
             progressPercent?.Report((int)(100.0 * processed / total));
         }
 
+        _logger?.Invoke($"? Сортировка документов завершена: перемещено {moved} из {total} файлов");
         return (moved, errors);
     }
 
@@ -107,10 +131,8 @@ public class DocumentSortingService
             var creation = fi.CreationTime;
             var write = fi.LastWriteTime;
 
-            // Берём более раннюю (обычно ближе к фактической дате документа)
             var min = creation <= write ? creation : write;
 
-            // страховка от "битых" дат
             if (min.Year < 1970 || min.Year > DateTime.Now.Year + 1)
                 return DateTime.Now;
 
@@ -133,7 +155,6 @@ public class DocumentSortingService
             if (string.IsNullOrWhiteSpace(firstPart))
                 return false;
 
-            // Сравниваем с ожидаемыми папками категорий
             return firstPart.Equals("PDF", StringComparison.OrdinalIgnoreCase)
                 || firstPart.Equals("DOC", StringComparison.OrdinalIgnoreCase)
                 || firstPart.Equals("DOCX", StringComparison.OrdinalIgnoreCase)

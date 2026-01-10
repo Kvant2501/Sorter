@@ -100,6 +100,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (vm.SelectedProfile == FileTypeProfile.DocumentsOnly)
+        {
+            await StartDocumentsSortingFromSortingTab(vm);
+            return;
+        }
+
         await StartSortingOnly(vm);
     }
 
@@ -113,20 +119,29 @@ public partial class MainWindow : Window
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
 
-        var progressDialog = new ProgressDialog("Сортировка", "Начата сортировка...");
+        string profileLabel = vm.SelectedProfileDisplayName;
+        string profileIcon = vm.SelectedProfile switch
+        {
+            FileTypeProfile.PhotosOnly => "📸",
+            FileTypeProfile.VideosOnly => "🎥",
+            FileTypeProfile.PhotosAndVideos => "📁",
+            _ => "📁"
+        };
+
+        var progressDialog = new ProgressDialog("Сортировка", $"Начата сортировка: {profileLabel}...");
         progressDialog.Owner = this;
 
         void OnCancel(object? s, EventArgs args)
         {
             _cts?.Cancel();
-            vm.Logger.Log("⚠️ Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log($"⚠️ [{profileLabel}] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
         }
 
         progressDialog.CancelRequested += OnCancel;
 
         var progress = new Progress<int>(percent =>
         {
-            try { progressDialog.UpdateStatus($"Сортировка: {percent}%"); }
+            try { progressDialog.UpdateStatus($"{profileLabel}: {percent}%"); }
             catch { }
         });
 
@@ -138,7 +153,11 @@ public partial class MainWindow : Window
             {
                 try
                 {
-                    var service = ServiceLocator.CreatePhotoSortingService();
+                    var service = ServiceLocator.CreatePhotoSortingService(msg =>
+                    {
+                        vm.Logger.Log($"{profileIcon} [{profileLabel}] {msg}", LogLevel.Info, profileIcon);
+                    });
+
                     var result = service.SortPhotos(
                         vm.SortingOptions,
                         vm.SelectedProfile,
@@ -150,7 +169,7 @@ public partial class MainWindow : Window
                 }
                 catch (OperationCanceledException)
                 {
-                    // Cancellation is expected
+                    // expected
                 }
                 catch (Exception ex)
                 {
@@ -160,18 +179,18 @@ public partial class MainWindow : Window
 
             if (!_cts.IsCancellationRequested)
             {
-                vm.Logger.Log($"✅ Сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
+                vm.Logger.Log($"✅ [{profileLabel}] Сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
                 foreach (var error in errors)
-                    vm.Logger.Log(error, LogLevel.Error, "❌");
+                    vm.Logger.Log($"❌ [{profileLabel}] {error}", LogLevel.Error, "❌");
             }
         }
         catch (OperationCanceledException)
         {
-            vm.Logger.Log("⚠️ Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log($"⚠️ [{profileLabel}] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
         }
         catch (Exception ex)
         {
-            vm.Logger.Log($"❌ Критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
+            vm.Logger.Log($"❌ [{profileLabel}] Критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
         }
         finally
         {
@@ -180,39 +199,8 @@ public partial class MainWindow : Window
         }
     }
 
-    #endregion
-
-    #region Tab: Documents
-
-    private void SelectDocumentsFolder_Click(object sender, RoutedEventArgs e)
+    private async Task StartDocumentsSortingFromSortingTab(MainViewModel vm)
     {
-        var dialog = new OpenFolderDialog();
-        if (dialog.ShowDialog())
-        {
-            if (DataContext is not MainViewModel vm) return;
-
-            vm.DocumentsSortingOptions = new SortingOptions
-            {
-                SourceFolder = dialog.FolderName ?? string.Empty,
-                IsRecursive = vm.DocumentsSortingOptions.IsRecursive,
-                SplitByMonth = vm.DocumentsSortingOptions.SplitByMonth,
-                CreateBackup = vm.DocumentsSortingOptions.CreateBackup
-            };
-
-            vm.Logger.Log($"📁 [Документы] Выбрана папка: {dialog.FolderName}", LogLevel.Info, "📁");
-        }
-    }
-
-    private async void StartDocumentsSorting_Click(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not MainViewModel vm) return;
-
-        if (string.IsNullOrWhiteSpace(vm.DocumentsSortingOptions.SourceFolder))
-        {
-            MessageBox.Show("Выберите папку для сортировки документов.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
         int movedFiles = 0;
         var errors = new List<string>();
 
@@ -226,7 +214,7 @@ public partial class MainWindow : Window
         void OnCancel(object? s, EventArgs args)
         {
             _cts?.Cancel();
-            vm.Logger.Log("⚠️ Сортировка документов отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log("⚠️ [Документы] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
         }
 
         progressDialog.CancelRequested += OnCancel;
@@ -245,14 +233,18 @@ public partial class MainWindow : Window
             {
                 try
                 {
-                    var service = ServiceLocator.CreateDocumentSortingService();
-                    var result = service.SortDocuments(vm.DocumentsSortingOptions, progress, _cts.Token);
+                    var service = ServiceLocator.CreateDocumentSortingService(msg =>
+                    {
+                        vm.Logger.Log($"📄 [Документы] {msg}", LogLevel.Info, "📄");
+                    });
+
+                    var result = service.SortDocuments(vm.SortingOptions, progress, _cts.Token);
                     movedFiles = result.MovedFiles;
                     errors = result.Errors;
                 }
                 catch (OperationCanceledException)
                 {
-                    // Cancellation is expected
+                    // expected
                 }
                 catch (Exception ex)
                 {
@@ -262,18 +254,18 @@ public partial class MainWindow : Window
 
             if (!_cts.IsCancellationRequested)
             {
-                vm.Logger.Log($"✅ Документы: сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
+                vm.Logger.Log($"✅ [Документы] Сортировка завершена. Перемещено файлов: {movedFiles}", LogLevel.Info, "✅");
                 foreach (var error in errors)
-                    vm.Logger.Log(error, LogLevel.Error, "❌");
+                    vm.Logger.Log($"❌ [Документы] {error}", LogLevel.Error, "❌");
             }
         }
         catch (OperationCanceledException)
         {
-            vm.Logger.Log("⚠️ Сортировка документов отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log("⚠️ [Документы] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
         }
         catch (Exception ex)
         {
-            vm.Logger.Log($"❌ Документы: критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
+            vm.Logger.Log($"❌ [Документы] Критическая ошибка: {ex.Message}", LogLevel.Error, "❌");
         }
         finally
         {
@@ -529,19 +521,54 @@ public partial class MainWindow : Window
             MessageBox.Show("Выберите папку для очистки.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        vm.Logger.Log($"🧹 Очистка папки: {vm.CleanupFolder}", LogLevel.Info, "🧹");
+
         var folder = vm.CleanupFolder;
-        var quarantineDir = Path.Combine(folder, $"Карантин_{DateTime.Now:yyyyMMdd_HHmm}");
-        Directory.CreateDirectory(quarantineDir);
 
-        int movedCount = 0;
+        if (!Directory.Exists(folder))
+        {
+            MessageBox.Show($"Папка не существует: {folder}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
 
+        // Запрещаем выбор корня диска
+        var root = Path.GetPathRoot(folder);
+        if (!string.IsNullOrEmpty(root) && string.Equals(root.TrimEnd('\\'), folder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(
+                "Нельзя выбирать корневой диск (C:\\, D:\\ и т.д.).\nВыберите конкретную папку.",
+                "Ошибка",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        vm.Logger.Log($"🧹 Начало очистки папки: {folder}", LogLevel.Info, "🧹");
+
+        // 1) Собираем кандидатов
+        var candidates = new List<(string path, string reason)>();
+
+        string[] allFiles;
         try
         {
-            var allFiles = Directory.GetFiles(folder, "*.*",
+            allFiles = Directory.GetFiles(folder, "*.*",
                 vm.CleanupRecursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            MessageBox.Show(
+                "Нет прав на чтение одной или нескольких подпапок.\n" +
+                "Попробуйте отключить рекурсивный поиск или выберите другую папку.",
+                "Доступ запрещён",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return;
+        }
 
-            foreach (var file in allFiles)
+        vm.Logger.Log($"📊 Найдено файлов: {allFiles.Length}", LogLevel.Info, "📊");
+
+        foreach (var file in allFiles)
+        {
+            try
             {
                 var fileName = Path.GetFileName(file).ToLowerInvariant();
                 var ext = Path.GetExtension(file).ToLowerInvariant();
@@ -557,35 +584,163 @@ public partial class MainWindow : Window
                     (fileName.StartsWith("~$") ||
                      ext == ".tmp" ||
                      ext == ".bak" ||
-                     ext == ".lock");
+                     ext == ".lock" ||
+                     ext == ".dwl" ||
+                     ext == ".dwl2" ||
+                     ext == ".asd" ||
+                     ext == ".wbk" ||
+                     ext == ".swp" ||
+                     ext == ".crdownload" ||
+                     ext == ".download" ||
+                     ext == ".part");
 
                 bool isEmptyFile = vm.CleanupEmptyFiles && (fileSize == 0);
 
                 if (isScreenshot || isTempFile || isEmptyFile)
                 {
-                    var dest = Path.Combine(quarantineDir, Path.GetFileName(file));
-                    File.Move(file, dest);
-                    movedCount++;
+                    var reason = isScreenshot ? "скриншот" : isTempFile ? "временный" : "пустой";
+                    candidates.Add((file, reason));
                 }
             }
+            catch (UnauthorizedAccessException)
+            {
+                vm.Logger.Log($"⛔ Доступ запрещён: {file}", LogLevel.Warning, "⛔");
+            }
+            catch (IOException)
+            {
+                vm.Logger.Log($"🔒 Файл занят/недоступен: {file}", LogLevel.Warning, "🔒");
+            }
+            catch (Exception ex)
+            {
+                vm.Logger.Log($"❌ Ошибка проверки {file}: {ex.Message}", LogLevel.Error, "❌");
+            }
+        }
 
-            if (movedCount > 0)
+        if (candidates.Count == 0)
+        {
+            vm.Logger.Log("🧹 Очистка: мусор не найден.", LogLevel.Info, "🧹");
+            MessageBox.Show("Мусор не найден.", "Информация");
+            return;
+        }
+
+        // Логируем найденное (для прозрачности)
+        vm.Logger.Log($"🧹 Очистка: найдено кандидатов — {candidates.Count}.", LogLevel.Info, "🧹");
+        foreach (var (path, reason) in candidates)
+        {
+            try
             {
-                vm.Logger.Log($"✅ Очистка завершена. Перемещено в Карантин: {movedCount} файлов", LogLevel.Info, "✅");
-                MessageBox.Show($"Перемещено файлов: {movedCount}\nКарантин: {quarantineDir}",
-                              "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                vm.Logger.Log($"   • {reason}: {path}", LogLevel.Info, "🧹");
             }
-            else
-            {
-                vm.Logger.Log("🧹 Очистка: мусор не найден.", LogLevel.Info, "🧹");
-                MessageBox.Show("Мусор не найден.", "Информация");
-            }
+            catch { }
+        }
+
+        // Подтверждение перед переносом
+        var confirm = MessageBox.Show(
+            $"Найдено файлов: {candidates.Count}\n\nПереместить в карантин?",
+            "Очистка — подтверждение",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirm != MessageBoxResult.Yes)
+        {
+            vm.Logger.Log("🧹 Очистка отменена пользователем.", LogLevel.Info, "🧹");
+            return;
+        }
+
+        // 2) Только теперь создаём карантин
+        string quarantineDir;
+        try
+        {
+            quarantineDir = Path.Combine(folder, $"Карантин_{DateTime.Now:yyyyMMdd_HHmm}");
+            Directory.CreateDirectory(quarantineDir);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            MessageBox.Show(
+                "Нет прав на создание папки карантина в выбранной директории.\n" +
+                "Выберите другую папку или запустите приложение от имени администратора.",
+                "Доступ запрещён",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return;
         }
         catch (Exception ex)
         {
-            vm.Logger.Log($"❌ Ошибка очистки: {ex.Message}", LogLevel.Error, "❌");
-            MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Не удалось создать папку карантина: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
+
+        // 3) Перемещаем
+        int movedCount = 0;
+        int failedCount = 0;
+
+        foreach (var (path, reason) in candidates)
+        {
+            try
+            {
+                var dest = Path.Combine(quarantineDir, Path.GetFileName(path));
+
+                if (File.Exists(dest))
+                {
+                    var baseName = Path.GetFileNameWithoutExtension(dest);
+                    var destExt = Path.GetExtension(dest);
+                    var i = 1;
+                    string candidate;
+                    do
+                    {
+                        candidate = Path.Combine(quarantineDir, $"{baseName}_{i}{destExt}");
+                        i++;
+                    } while (File.Exists(candidate));
+                    dest = candidate;
+                }
+
+                File.Move(path, dest);
+                movedCount++;
+                vm.Logger.Log($"🗑️ В карантин ({reason}): {Path.GetFileName(path)}", LogLevel.Info, "🗑️");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                failedCount++;
+                vm.Logger.Log($"⛔ Доступ запрещён (пропуск): {path}", LogLevel.Warning, "⛔");
+            }
+            catch (IOException)
+            {
+                failedCount++;
+                vm.Logger.Log($"🔒 Файл занят/недоступен (пропуск): {path}", LogLevel.Warning, "🔒");
+            }
+            catch (Exception ex)
+            {
+                failedCount++;
+                vm.Logger.Log($"❌ Ошибка перемещения {path}: {ex.Message}", LogLevel.Error, "❌");
+            }
+        }
+
+        if (movedCount == 0)
+        {
+            // Ничего не перемещено — чтобы не плодить пустые папки, удаляем карантин
+            try
+            {
+                if (Directory.Exists(quarantineDir) && !Directory.EnumerateFileSystemEntries(quarantineDir).Any())
+                    Directory.Delete(quarantineDir);
+            }
+            catch { }
+
+            vm.Logger.Log($"🧹 Очистка: найдено файлов — {candidates.Count}, но переместить не удалось (ошибок: {failedCount}).", LogLevel.Warning, "🧹");
+            MessageBox.Show(
+                $"Найдено файлов: {candidates.Count}\nПеремещено: 0\nОшибок: {failedCount}\n\n" +
+                "Файлы могли быть заняты другими программами или недоступны по правам.",
+                "Результат очистки",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        vm.Logger.Log($"✅ Очистка завершена. Найдено: {candidates.Count}. Перемещено в Карантин: {movedCount}. Ошибок: {failedCount}.", LogLevel.Info, "✅");
+        MessageBox.Show(
+            $"Найдено файлов: {candidates.Count}\nПеремещено: {movedCount}\nОшибок: {failedCount}\n\nКарантин: {quarantineDir}",
+            "Готово",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     #endregion
@@ -720,6 +875,7 @@ public partial class MainWindow : Window
                     "PhotosOnly" => FileTypeProfile.PhotosOnly,
                     "VideosOnly" => FileTypeProfile.VideosOnly,
                     "PhotosAndVideos" => FileTypeProfile.PhotosAndVideos,
+                    "DocumentsOnly" => FileTypeProfile.DocumentsOnly,
                     _ => FileTypeProfile.PhotosOnly
                 };
             }
@@ -773,13 +929,84 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region Tab: Catalog
+
+    private void SelectCatalogFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog();
+        if (dialog.ShowDialog() == true)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.CatalogFolder = dialog.FolderName ?? string.Empty;
+            }
+        }
+    }
+
+    private void GenerateCatalog_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        var catalogFolder = vm.CatalogFolder;
+        if (string.IsNullOrWhiteSpace(catalogFolder))
+        {
+            MessageBox.Show("Выберите папку для создания каталога.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!Directory.Exists(catalogFolder))
+        {
+            MessageBox.Show($"Папка не существует: {catalogFolder}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        vm.Logger.Log($"📂 Создание HTML-каталога для: {catalogFolder}", LogLevel.Info, "📂");
+
+        try
+        {
+            var includeFiles = CatalogIncludeFilesCheckBox.IsChecked == true;
+            var includeSize = CatalogIncludeSizeCheckBox.IsChecked == true;
+
+            vm.Logger.Log($"📊 Параметры: файлы={includeFiles}, размеры={includeSize}", LogLevel.Info, "📊");
+
+            var htmlCatalog = DirectoryCatalogGenerator.GenerateCatalog(catalogFolder, includeFiles, includeSize);
+
+            var catalogPath = Path.Combine(catalogFolder, $"catalog_{DateTime.Now:yyyyMMdd_HHmmss}.html");
+            File.WriteAllText(catalogPath, htmlCatalog, System.Text.Encoding.UTF8);
+
+            vm.Logger.Log($"✅ Каталог создан: {catalogPath}", LogLevel.Info, "✅");
+
+            var result = MessageBox.Show(
+                $"HTML-каталог успешно создан!\n\n{catalogPath}\n\nОткрыть в браузере?",
+                "Готово",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Information);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = catalogPath,
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Ошибка создания каталога: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show($"Ошибка создания каталога:\n\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    #endregion
+
     #region Menu
 
     private void Exit_Click(object sender, RoutedEventArgs e) => Close();
 
     private void About_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("PhotoSorter v1.0.2\nСортировка фото по дате и поиск дубликатов.", "О программе");
+        MessageBox.Show("PhotoSorter v2.0\nСортировка фото/видео/документов по дате, поиск дубликатов, очистка и переименование.", "О программе");
     }
 
     private void Formats_Click(object sender, RoutedEventArgs e)
@@ -789,7 +1016,7 @@ public partial class MainWindow : Window
 
 📸 Фото: JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG
 🎥 Видео: MP4, MOV, AVI, MKV, WMV, M4V
-📄 Документы (на вкладке «Документы»): PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, RTF
+📄 Документы: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, RTF
 
 Дубликаты ищутся по содержимому (хеш SHA256).
 ";
@@ -820,130 +1047,100 @@ public partial class MainWindow : Window
     <title>PhotoSorter — Полная справка</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #fff; color: #333; line-height: 1.6; }
-        h1 { color: #0078D7; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h1 { color: #2563EB; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         h2 { color: #333; margin-top: 30px; }
         h3 { color: #555; margin-top: 20px; }
         .section { margin-bottom: 30px; }
         code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; }
-        .tip { background: #e6f4ff; border-left: 4px solid #0078D7; padding: 15px; margin: 15px 0; }
+        .tip { background: #e6f4ff; border-left: 4px solid #2563EB; padding: 15px; margin: 15px 0; }
         ul { padding-left: 20px; }
         li { margin-bottom: 8px; }
     </style>
 </head>
 <body>
-    <h1>PhotoSorter — Полная справка</h1>
-    
+    <h1>PhotoSorter — Полная справка (v2.0)</h1>
+
     <div class='section'>
         <h2>1. Общие принципы</h2>
         <p>PhotoSorter — это инструмент для безопасного управления цифровым архивом фотографий, видео и документов.</p>
         <div class='tip'>
-            <strong>Важно:</strong> Программа <strong>никогда не удаляет файлы безвозвратно</strong>. Все операции (дубликаты, очистка) перемещают файлы в папку <code>Карантин_ГГГГММДД_ЧЧММ</code>.
+            <strong>Важно:</strong> программа по умолчанию <strong>не удаляет файлы безвозвратно</strong>. Операции «Дубликаты» и «Очистка» перемещают файлы в папку карантина.
         </div>
+        <ul>
+            <li><strong>Сортировка</strong>: переносит файлы в структуру по дате (год/месяц).</li>
+            <li><strong>Дубликаты</strong>: ищет одинаковые файлы по содержимому (хеш).</li>
+            <li><strong>Очистка</strong>: ищет мусор (скриншоты/временные/пустые) и перемещает в карантин.</li>
+            <li><strong>Переименование</strong>: переименовывает по шаблону с превью результата.</li>
+            <li><strong>Каталог</strong>: генерирует HTML-каталог выбранной папки.</li>
+            <li><strong>Лог</strong>: показывает историю операций, можно сохранить в файл.</li>
+        </ul>
     </div>
 
     <div class='section'>
         <h2>2. Вкладка «Сортировка»</h2>
-        <h3>Как это работает</h3>
+        <h3>Как работает</h3>
         <ul>
-            <li>Программа сортирует выбранный тип файлов: <strong>Фото</strong>, <strong>Видео</strong> или <strong>Фото + видео</strong></li>
-            <li>Определяет дату: сначала из EXIF (если есть), затем — дата создания файла</li>
-            <li>Создаёт структуру: <code>Год/</code> или <code>Год/Месяц/</code></li>
+            <li>Выберите папку-источник.</li>
+            <li>Выберите тип файлов: фото/видео/фото+видео/документы.</li>
+            <li>Дата берётся из метаданных (EXIF), иначе — из даты создания файла.</li>
+            <li>Структура: <code>Год/</code> или <code>Год/Месяц/</code> (если включено «Разбивать по месяцам»).</li>
         </ul>
-        <h3>Настройки</h3>
+        <h3>Опции</h3>
         <ul>
-            <li><strong>Рекурсивный поиск</strong> — обрабатывать подпапки</li>
-            <li><strong>Создать бэкап</strong> — копия исходной папки перед сортировкой</li>
-        </ul>
-    </div>
-
-    <div class='section'>
-        <h2>3. Вкладка «Документы»</h2>
-        <h3>Как это работает</h3>
-        <ul>
-            <li>Сортирует документы по расширениям (например: <code>PDF</code>, <code>DOCX</code>, <code>XLSX</code>)</li>
-            <li>Внутри каждой папки расширения создаёт структуру: <code>Год/</code> или <code>Год/Месяц/</code></li>
-            <li>Дата берётся из даты создания/изменения файла (если метаданные приложения недоступны)</li>
-        </ul>
-        <h3>Настройки</h3>
-        <ul>
-            <li><strong>Рекурсивный поиск</strong> — обрабатывать подпапки</li>
-            <li><strong>Разбивать по месяцам</strong> — <code>Год/Месяц</code></li>
-            <li><strong>Создать бэкап</strong> — копия исходной папки перед сортировкой</li>
+            <li><strong>Рекурсивный поиск</strong> — обрабатывать подпапки.</li>
+            <li><strong>Разбивать по месяцам</strong> — год/месяц вместо только года.</li>
+            <li><strong>Создать бэкап</strong> — создать резервную копию исходной папки перед сортировкой.</li>
         </ul>
     </div>
 
     <div class='section'>
-        <h2>4. Вкладка «Дубликаты»</h2>
-        <h3>Как это работает</h3>
+        <h2>3. Вкладка «Дубликаты»</h2>
         <ul>
-            <li>Поиск по <strong>содержимому файла</strong> (хеш SHA256) — подходит для фото, видео и документов</li>
-            <li>В каждой группе файлы <strong>отсортированы по размеру</strong> (самый большой — первый)</li>
-            <li>По умолчанию <strong>выбраны все, кроме первого</strong> (самого большого)</li>
+            <li>Выберите папку для поиска.</li>
+            <li>Можно включить рекурсивный поиск.</li>
+            <li>Выберите тип файлов (фото/видео/фото+видео/документы).</li>
+            <li>Результат показывается группами; лишние файлы можно отправить в карантин.</li>
         </ul>
-        <h3>Выбор типа файлов</h3>
+    </div>
+
+    <div class='section'>
+        <h2>4. Вкладка «Очистка»</h2>
         <ul>
-            <li><strong>Фото</strong> — ищет дубликаты только среди изображений</li>
-            <li><strong>Видео</strong> — только среди видео</li>
-            <li><strong>Фото + видео</strong> — среди медиафайлов</li>
-            <li><strong>Документы</strong> — среди офисных файлов (PDF/DOCX/XLSX/PPTX/TXT и т.д.)</li>
-        </ul>
-        <h3>Удаление</h3>
-        <p>При удалении вы можете выбрать:</p>
-        <ul>
-            <li><strong>Карантин</strong> — файлы перемещаются в папку <code>Карантин_...</code> в той же директории</li>
-            <li><strong>Корзина</strong> — файлы удаляются в системную корзину</li>
+            <li>Выберите папку для очистки.</li>
+            <li>Опции: рекурсивно, скриншоты, временные файлы, пустые файлы.</li>
+            <li>Найденные элементы перемещаются в подкаталог карантина внутри выбранной папки.</li>
         </ul>
     </div>
 
     <div class='section'>
         <h2>5. Вкладка «Переименование»</h2>
-        <h3>Конструктор шаблонов</h3>
-        <p>Собирайте имя файла из блоков:</p>
         <ul>
-            <li><code>Текст</code> — произвольный текст («Фото_», «Лето_»)</li>
-            <li><code>Дата</code> → <code>{date}</code> → 20240521</li>
-            <li><code>Индекс</code> → <code>{index}</code> → 0001, 0002, ...</li>
-            <li><code>Имя</code> → <code>{name}</code> → оригинальное имя файла</li>
-            <li><code>Год</code>, <code>Месяц</code>, <code>День</code> — отдельные части даты</li>
-        </ul>
-        <h3>Примеры</h3>
-        <ul>
-            <li><code>Фото_{date}_{index}</code> → <code>Фото_20240521_0001.jpg</code></li>
-            <li><code>{year}/{month}/IMG_{index}</code> → <code>2024/05/IMG_0001.jpg</code></li>
+            <li>Выберите папку.</li>
+            <li>Выберите шаблон или задайте свой.</li>
+            <li>Доступные блоки: <code>{date}</code>, <code>{year}</code>, <code>{month}</code>, <code>{day}</code>, <code>{index}</code>, <code>{name}</code>.</li>
+            <li>Показывается превью результата.</li>
         </ul>
     </div>
 
     <div class='section'>
-        <h2>6. Вкладка «Очистка»</h2>
-        <p>Перемещает в Карантин:</p>
+        <h2>6. Вкладка «Каталог»</h2>
         <ul>
-            <li><strong>Скриншоты</strong> — файлы с «screenshot», «скриншот», «capture» в имени</li>
-            <li><strong>Временные файлы</strong> — <code>~$</code>, <code>.tmp</code>, <code>.bak</code></li>
-            <li><strong>Пустые файлы</strong> — размер 0 байт</li>
+            <li>Генерирует HTML-каталог выбранной папки.</li>
+            <li>Можно включить/выключить отображение файлов и размеров.</li>
+            <li>Файл сохраняется как <code>catalog_YYYYMMDD_HHMMSS.html</code> в выбранной папке.</li>
         </ul>
     </div>
 
     <div class='section'>
-        <h2>7. Поддерживаемые форматы</h2>
-        <h3>📸 Фото</h3>
-        <p>JPG, JPEG, PNG, BMP, TIFF, CR2, CR3, NEF, ARW, DNG</p>
-        <h3>🎥 Видео</h3>
-        <p>MP4, MOV, AVI, MKV, WMV, M4V</p>
-        <h3>📄 Документы</h3>
-        <p>PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, RTF</p>
-    </div>
-
-    <div class='section'>
-        <h2>8. Безопасность и восстановление</h2>
+        <h2>7. Вкладка «Лог»</h2>
         <ul>
-            <li>Все удалённые файлы — в папке <code>Карантин_...</code></li>
-            <li>Бэкап создаётся как папка <code>Backup_...</code> рядом с исходной</li>
-            <li>Никаких безвозвратных операций без вашего подтверждения</li>
+            <li>Отображает сообщения о ходе операций.</li>
+            <li>Можно сохранить лог в текстовый файл.</li>
         </ul>
     </div>
 
     <hr>
-    <p><em>PhotoSorter v1.0.2 — ваш надёжный архивариус</em></p>
+    <p><em>PhotoSorter v2.0</em></p>
 </body>
 </html>";
     }
@@ -952,10 +1149,6 @@ public partial class MainWindow : Window
 
     #region Folder selection dialog (helper class)
 
-    /// <summary>
-    /// Simple wrapper around FolderBrowserDialog for folder selection.
-    /// Does not allow selecting a root drive (e.g. C:\).
-    /// </summary>
     public class OpenFolderDialog
     {
         public string? FolderName { get; private set; }

@@ -21,10 +21,10 @@ public static class ServiceLocator
     /// Фабрика для создания сервиса сортировки фото.
     /// По умолчанию создаёт экземпляр <see cref="PhotoSortingService"/>.
     /// </summary>
-    public static Func<PhotoSortingService> CreatePhotoSortingService { get; set; } = () => new PhotoSortingService();
+    public static Func<Action<string>?, PhotoSortingService> CreatePhotoSortingService { get; set; } = (logger) => new PhotoSortingService(logger);
 
     /// <summary>
     /// Фабрика для создания сервиса сортировки документов.
     /// </summary>
-    public static Func<DocumentSortingService> CreateDocumentSortingService { get; set; } = () => new DocumentSortingService();
+    public static Func<Action<string>?, DocumentSortingService> CreateDocumentSortingService { get; set; } = (logger) => new DocumentSortingService(logger);
 }

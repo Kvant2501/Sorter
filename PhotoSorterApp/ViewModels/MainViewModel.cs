@@ -17,14 +17,6 @@ public class MainViewModel : INotifyPropertyChanged
         set { _sortingOptions = value; OnPropertyChanged(); }
     }
 
-    // === Section: Sorting (Documents) ===
-    private SortingOptions _documentsSortingOptions = new();
-    public SortingOptions DocumentsSortingOptions
-    {
-        get => _documentsSortingOptions;
-        set { _documentsSortingOptions = value; OnPropertyChanged(); }
-    }
-
     // === Duplicates ===
     private string? _duplicatesSearchFolder;
     public string? DuplicatesSearchFolder
@@ -149,8 +141,18 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsPhotosOnly));
             OnPropertyChanged(nameof(IsVideosOnly));
             OnPropertyChanged(nameof(IsPhotosAndVideos));
+            OnPropertyChanged(nameof(SelectedProfileDisplayName));
         }
     }
+
+    public string SelectedProfileDisplayName => SelectedProfile switch
+    {
+        FileTypeProfile.PhotosOnly => "Фото",
+        FileTypeProfile.VideosOnly => "Видео",
+        FileTypeProfile.PhotosAndVideos => "Фото+Видео",
+        FileTypeProfile.DocumentsOnly => "Документы",
+        _ => "Файлы"
+    };
 
     public bool IsPhotosOnly
     {
@@ -168,6 +170,14 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => SelectedProfile == FileTypeProfile.PhotosAndVideos;
         set { if (value) SelectedProfile = FileTypeProfile.PhotosAndVideos; }
+    }
+
+    // === Catalog ===
+    private string? _catalogFolder;
+    public string? CatalogFolder
+    {
+        get => _catalogFolder;
+        set { _catalogFolder = value; OnPropertyChanged(); }
     }
 
     // === UI logging ===

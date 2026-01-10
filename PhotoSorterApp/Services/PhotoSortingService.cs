@@ -8,22 +8,15 @@ using System.Threading;
 
 namespace PhotoSorterApp.Services;
 
-/// <summary>
-/// Service that sorts photos into folders by date taken.
-/// </summary>
 public class PhotoSortingService
 {
-    /// <summary>
-    /// Default constructor.
-    /// </summary>
-    public PhotoSortingService()
+    private readonly Action<string>? _logger;
+
+    public PhotoSortingService(Action<string>? logger = null)
     {
+        _logger = logger;
     }
 
-    /// <summary>
-    /// Sorts photos: moves files into Year[/Month] structure.
-    /// Returns moved file count and any errors encountered.
-    /// </summary>
     public (int MovedFiles, List<string> Errors) SortPhotos(
         SortingOptions options,
         FileTypeProfile profile,
@@ -32,6 +25,8 @@ public class PhotoSortingService
     {
         if (string.IsNullOrWhiteSpace(options.SourceFolder))
             throw new ArgumentException("Source folder is required.", nameof(options));
+
+        _logger?.Invoke($"🔧 Начало сортировки: {options.SourceFolder}");
 
         var extensions = SupportedFormats.GetExtensionsByProfile(profile);
         var extSet = new HashSet<string>(extensions, StringComparer.OrdinalIgnoreCase);
@@ -45,20 +40,26 @@ public class PhotoSortingService
 
         if (allFiles.Count == 0)
         {
+            _logger?.Invoke("⚠️ Файлов для сортировки не найдено");
             return (0, errors);
         }
 
-        // Optionally create a backup of the source
+        _logger?.Invoke($"📊 Найдено файлов: {allFiles.Count}");
+
         if (options.CreateBackup)
         {
+            _logger?.Invoke("💾 Создание резервной копии...");
             var backupDir = Path.Combine(options.SourceFolder, $"Backup_{DateTime.Now:yyyyMMdd_HHmm}");
             try
             {
                 CopyDirectory(options.SourceFolder, backupDir, excludeDirs: new[] { backupDir });
+                _logger?.Invoke($"✅ Backup создан: {backupDir}");
             }
             catch (Exception ex)
             {
-                errors.Add($"Backup creation error: {ex.Message}");
+                var error = $"❌ Ошибка создания backup: {ex.Message}";
+                errors.Add(error);
+                _logger?.Invoke(error);
             }
         }
 
@@ -69,7 +70,10 @@ public class PhotoSortingService
         foreach (var file in allFiles)
         {
             if (cancellationToken.IsCancellationRequested)
+            {
+                _logger?.Invoke("⚠️ Сортировка отменена пользователем");
                 break;
+            }
 
             try
             {
@@ -81,7 +85,6 @@ public class PhotoSortingService
                 Directory.CreateDirectory(targetDir);
                 string destFile = Path.Combine(targetDir, Path.GetFileName(file));
 
-                // Avoid overwrite — add suffix on conflict
                 if (File.Exists(destFile))
                 {
                     string name = Path.GetFileNameWithoutExtension(file);
@@ -96,16 +99,20 @@ public class PhotoSortingService
 
                 File.Move(file, destFile);
                 moved++;
+                _logger?.Invoke($"📁 Перемещён: {Path.GetFileName(file)} → {Path.GetRelativePath(options.SourceFolder, destFile)}");
             }
             catch (Exception ex)
             {
-                errors.Add($"Error processing {file}: {ex.Message}");
+                var error = $"❌ Ошибка обработки {Path.GetFileName(file)}: {ex.Message}";
+                errors.Add(error);
+                _logger?.Invoke(error);
             }
 
             processed++;
             progressPercent?.Report((int)(100.0 * processed / total));
         }
 
+        _logger?.Invoke($"✅ Сортировка завершена: перемещено {moved} из {total} файлов");
         return (moved, errors);
     }
 
