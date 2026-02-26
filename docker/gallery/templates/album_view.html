@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% set active_page = "albums" %}
+
+{% block title %}{{ album.name }}{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h2>{{ album.name }}</h2>
+    <span style="color: var(--text-subtle); font-size: 14px;">{{ total }} фото</span>
+</div>
+
+{% if album.description %}
+<p style="color: var(--text-subtle); margin-bottom: 16px;">{{ album.description }}</p>
+{% endif %}
+
+<p style="margin-bottom: 16px;"><a href="/albums">? Назад к альбомам</a></p>
+
+{% if photos %}
+<div class="photo-grid">
+    {% for photo in photos %}
+    <a href="/photo/{{ photo.id }}/view" class="photo-item">
+        <img src="/thumb/{{ photo.id }}" alt="{{ photo.file_name }}" loading="lazy">
+        <div class="overlay">
+            {{ photo.file_name }}
+            {% if photo.date_taken %}<br>{{ photo.date_taken[:10] }}{% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="/albums/{{ album.id }}?page={{ page - 1 }}">? Назад</a>
+    {% endif %}
+    {% for p in range(1, pages + 1) %}
+        {% if p == page %}
+        <span class="current">{{ p }}</span>
+        {% elif p <= 3 or p >= pages - 2 or (p >= page - 2 and p <= page + 2) %}
+        <a href="/albums/{{ album.id }}?page={{ p }}">{{ p }}</a>
+        {% elif p == 4 or p == pages - 3 %}
+        <span>…</span>
+        {% endif %}
+    {% endfor %}
+    {% if page < pages %}
+    <a href="/albums/{{ album.id }}?page={{ page + 1 }}">Вперёд ?</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="icon">??</div>
+    <h3>Альбом пуст</h3>
+</div>
+{% endif %}
+{% endblock %}

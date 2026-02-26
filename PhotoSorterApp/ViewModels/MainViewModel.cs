@@ -172,12 +172,98 @@ public class MainViewModel : INotifyPropertyChanged
         set { if (value) SelectedProfile = FileTypeProfile.PhotosAndVideos; }
     }
 
+    // === AI Content Sorting ===
+    private string? _aiSourceFolder;
+    public string? AiSourceFolder
+    {
+        get => _aiSourceFolder;
+        set { _aiSourceFolder = value; OnPropertyChanged(); }
+    }
+
+    private string? _aiOutputFolder;
+    public string? AiOutputFolder
+    {
+        get => _aiOutputFolder;
+        set { _aiOutputFolder = value; OnPropertyChanged(); }
+    }
+
+    private bool _isAiRecursive = true;
+    public bool IsAiRecursive
+    {
+        get => _isAiRecursive;
+        set { _isAiRecursive = value; OnPropertyChanged(); }
+    }
+
+    private string _aiCategories = "";
+    public string AiCategories
+    {
+        get => _aiCategories;
+        set { _aiCategories = value; OnPropertyChanged(); }
+    }
+
+    private double _aiMinConfidence = 0.15;
+    public double AiMinConfidence
+    {
+        get => _aiMinConfidence;
+        set { _aiMinConfidence = value; OnPropertyChanged(); }
+    }
+
+    private string _aiDockerStatus = "Не проверено";
+    public string AiDockerStatus
+    {
+        get => _aiDockerStatus;
+        set { _aiDockerStatus = value; OnPropertyChanged(); }
+    }
+
     // === Catalog ===
     private string? _catalogFolder;
     public string? CatalogFolder
     {
         get => _catalogFolder;
         set { _catalogFolder = value; OnPropertyChanged(); }
+    }
+
+    // === Gallery ===
+    private string? _galleryFolder;
+    public string? GalleryFolder
+    {
+        get => _galleryFolder;
+        set { _galleryFolder = value; OnPropertyChanged(); }
+    }
+
+    private bool _galleryRecursive = true;
+    public bool GalleryRecursive
+    {
+        get => _galleryRecursive;
+        set { _galleryRecursive = value; OnPropertyChanged(); }
+    }
+
+    private bool _galleryUseAi;
+    public bool GalleryUseAi
+    {
+        get => _galleryUseAi;
+        set { _galleryUseAi = value; OnPropertyChanged(); }
+    }
+
+    private string _galleryServiceStatus = "Не проверено";
+    public string GalleryServiceStatus
+    {
+        get => _galleryServiceStatus;
+        set { _galleryServiceStatus = value; OnPropertyChanged(); }
+    }
+
+    private string _galleryIndexingStatus = "";
+    public string GalleryIndexingStatus
+    {
+        get => _galleryIndexingStatus;
+        set { _galleryIndexingStatus = value; OnPropertyChanged(); }
+    }
+
+    private string _galleryStats = "";
+    public string GalleryStats
+    {
+        get => _galleryStats;
+        set { _galleryStats = value; OnPropertyChanged(); }
     }
 
     // === UI logging ===
@@ -192,13 +278,23 @@ public class MainViewModel : INotifyPropertyChanged
 }
 
 /// <summary>
-/// Simple log collection with helper Add method.
+/// Simple log collection with helper Add method. Thread-safe: dispatches to UI thread if needed.
 /// </summary>
 public class LogCollection : ObservableCollection<LogEntry>
 {
     public void Log(string message, LogLevel level, string icon = "")
     {
-        Add(new LogEntry(message, level, icon));
+        var entry = new LogEntry(message, level, icon);
+
+        if (System.Windows.Application.Current?.Dispatcher is { } dispatcher
+            && !dispatcher.CheckAccess())
+        {
+            dispatcher.BeginInvoke(() => Add(entry));
+        }
+        else
+        {
+            Add(entry);
+        }
     }
 }
 

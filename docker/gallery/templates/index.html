@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% set active_page = "home" %}
+
+{% block title %}PhotoSorter Gallery — Главная{% endblock %}
+
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="number">{{ total }}</div>
+        <div class="label">?? Фотографий</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ albums_count }}</div>
+        <div class="label">?? Альбомов</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ years|length }}</div>
+        <div class="label">?? Лет в архиве</div>
+    </div>
+</div>
+
+{% if total == 0 %}
+<div class="empty-state">
+    <div class="icon">??</div>
+    <h3>Галерея пуста</h3>
+    <p>Запустите индексацию из приложения PhotoSorter<br>или отправьте POST-запрос на <code>/api/index</code></p>
+    <p style="margin-top: 16px; font-size: 13px; color: var(--text-subtle);">
+        Пример: <code>curl -X POST http://localhost:8080/api/index -H "Content-Type: application/json" -d '{"folder": "/photos", "recursive": true, "use_ai": true}'</code>
+    </p>
+</div>
+{% else %}
+
+{% if years %}
+<div class="card">
+    <div class="section-header">
+        <h2>?? Годы</h2>
+        <a href="/albums?album_type=auto_year">Все альбомы по годам ?</a>
+    </div>
+    <div class="filters">
+        {% for y in years %}
+        <a href="/timeline?year={{ y }}" class="filter-btn">{{ y }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="section-header">
+    <h2>?? Последние фотографии</h2>
+    <a href="/timeline">Показать все ?</a>
+</div>
+
+<div class="photo-grid">
+    {% for photo in recent_photos %}
+    <a href="/photo/{{ photo.id }}/view" class="photo-item">
+        <img src="/thumb/{{ photo.id }}" alt="{{ photo.file_name }}" loading="lazy">
+        <div class="overlay">
+            {{ photo.file_name }}
+            {% if photo.date_taken %}
+            <br>{{ photo.date_taken[:10] }}
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% endif %}
+{% endblock %}

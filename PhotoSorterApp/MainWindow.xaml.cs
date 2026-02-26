@@ -14,12 +14,249 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Text;
 
 namespace PhotoSorterApp;
 
 public partial class MainWindow : Window
 {
     private CancellationTokenSource? _cts;
+
+    private static string GetDockerComposeWorkingDirectory()
+    {
+        // Try several likely starting points and search upward for a 'docker/docker-compose.yml' folder
+        var candidates = new[]
+        {
+            AppDomain.CurrentDomain.BaseDirectory,
+            AppContext.BaseDirectory,
+            Environment.CurrentDirectory,
+            Path.GetDirectoryName(typeof(MainWindow).Assembly.Location) ?? string.Empty
+        };
+
+        foreach (var start in candidates.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => Path.GetFullPath(s)))
+        {
+            var dir = start.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            for (int i = 0; i < 8 && !string.IsNullOrEmpty(dir); i++)
+            {
+                var candidate = Path.Combine(dir, "docker");
+                var compose = Path.Combine(candidate, "docker-compose.yml");
+                try
+                {
+                    if (File.Exists(compose))
+                        return candidate;
+                }
+                catch { }
+
+                var parent = Path.GetDirectoryName(dir);
+                if (string.IsNullOrEmpty(parent) || parent == dir) break;
+                dir = parent;
+            }
+        }
+
+        // Fallback: docker folder next to application base directory (original behavior)
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "docker");
+    }
+
+    private static string GetDockerComposeFilePath()
+        => Path.Combine(GetDockerComposeWorkingDirectory(), "docker-compose.yml");
+
+    private async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(string fileName, string arguments, string workingDir)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            WorkingDirectory = workingDir,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        using var p = new Process { StartInfo = psi };
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+
+        p.OutputDataReceived += (_, e) => { if (e.Data != null) stdout.AppendLine(e.Data); };
+        p.ErrorDataReceived += (_, e) => { if (e.Data != null) stderr.AppendLine(e.Data); };
+
+        p.Start();
+        p.BeginOutputReadLine();
+        p.BeginErrorReadLine();
+        await p.WaitForExitAsync();
+
+        return (p.ExitCode, stdout.ToString().Trim(), stderr.ToString().Trim());
+    }
+
+    private async void StartGalleryDocker_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        var wd = GetDockerComposeWorkingDirectory();
+        var composeFile = GetDockerComposeFilePath();
+
+        if (!File.Exists(composeFile))
+        {
+            vm.Logger.Log($"❌ Не найден docker-compose.yml: {composeFile}", LogLevel.Error, "❌");
+            MessageBox.Show($"Не найден docker-compose.yml:\n{composeFile}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        // Require a gallery folder to be selected so we know what to mount
+        if (string.IsNullOrWhiteSpace(vm.GalleryFolder))
+        {
+            MessageBox.Show(
+                "Сначала выберите папку с фотографиями.\n\nЭта папка будет подключена к Docker-контейнеру.",
+                "Папка не выбрана",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!Directory.Exists(vm.GalleryFolder))
+        {
+            MessageBox.Show($"Папка не существует: {vm.GalleryFolder}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        // Quick check: is Docker Engine reachable?
+        try
+        {
+            var (pingCode, _, pingErr) = await RunProcessAsync("docker", "info", wd);
+            if (pingCode != 0)
+            {
+                var msg = "Docker недоступен. Похоже, Docker Desktop (Engine) не запущен.\n\n" +
+                          "Шаги:\n" +
+                          "1) Запустите Docker Desktop\n" +
+                          "2) Дождитесь статуса 'Engine running'\n" +
+                          "3) Нажмите 'Запустить Docker' ещё раз\n\n" +
+                          "Детали: " + (string.IsNullOrWhiteSpace(pingErr) ? "docker info вернул код " + pingCode : pingErr);
+
+                vm.Logger.Log("❌ Docker: Engine недоступен (docker info).", LogLevel.Error, "❌");
+                if (!string.IsNullOrWhiteSpace(pingErr))
+                    vm.Logger.Log(pingErr, LogLevel.Error, "❌");
+
+                MessageBox.Show(msg, "Docker", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Docker: не удалось выполнить 'docker info': {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show(
+                "Docker недоступен. Убедитесь, что Docker Desktop установлен и запущен.",
+                "Docker",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        // Always set PHOTOS_DIR from the selected gallery folder so compose mounts it correctly.
+        Environment.SetEnvironmentVariable("PHOTOS_DIR", vm.GalleryFolder);
+        vm.Logger.Log($"🐳 Docker: PHOTOS_DIR = {vm.GalleryFolder}", LogLevel.Info, "🐳");
+
+        // Use --force-recreate so Docker picks up the (possibly changed) PHOTOS_DIR volume mount.
+        vm.Logger.Log("🐳 Docker: запускаю 'docker compose up -d --force-recreate'...", LogLevel.Info, "🐳");
+        try
+        {
+            var (code, outText, errText) = await RunProcessAsync("docker", "compose up -d --force-recreate", wd);
+            if (!string.IsNullOrWhiteSpace(outText)) vm.Logger.Log(outText, LogLevel.Info, "🐳");
+            if (!string.IsNullOrWhiteSpace(errText)) vm.Logger.Log(errText, code == 0 ? LogLevel.Warning : LogLevel.Error, code == 0 ? "⚠️" : "❌");
+
+            if (code != 0)
+            {
+                MessageBox.Show("Не удалось запустить Docker compose. Смотрите вкладку 'Лог'.", "Docker", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Refresh service status after start
+            vm.Logger.Log("🐳 Docker: ожидание готовности сервиса...", LogLevel.Info, "🐳");
+            await Task.Delay(3000);
+            using var gallery = new GalleryService();
+            var isAvailable = await gallery.IsAvailableAsync();
+            vm.GalleryServiceStatus = isAvailable ? "✅ Gallery-сервис доступен" : "❌ Сервис недоступен";
+
+            // Debug: check what's mounted at /photos inside the container
+            if (isAvailable)
+            {
+                try
+                {
+                    var debugInfo = await gallery.DebugListFilesAsync("/photos");
+                    if (!debugInfo.Exists)
+                    {
+                        vm.Logger.Log("⚠️ Docker: папка /photos НЕ существует внутри контейнера!", LogLevel.Warning, "⚠️");
+                    }
+                    else
+                    {
+                        vm.Logger.Log($"🐳 Docker: /photos смонтирована. Файлов: {debugInfo.Files.Length}, Папок: {debugInfo.Dirs.Length}", LogLevel.Info, "🐳");
+                        if (debugInfo.Files.Length == 0 && debugInfo.Dirs.Length == 0)
+                        {
+                            vm.Logger.Log("⚠️ Docker: папка /photos пуста! Проверьте, что выбрана правильная папка с фотографиями.", LogLevel.Warning, "⚠️");
+                        }
+                        else
+                        {
+                            foreach (var dir in debugInfo.Dirs.Take(5))
+                                vm.Logger.Log($"   📁 {dir}", LogLevel.Info, "🐳");
+                            foreach (var file in debugInfo.Files.Take(5))
+                                vm.Logger.Log($"   📄 {file.Name} ({file.Size / 1024} KB)", LogLevel.Info, "🐳");
+                            if (debugInfo.TotalEntries > 10)
+                                vm.Logger.Log($"   ... и ещё {debugInfo.TotalEntries - 10} записей", LogLevel.Info, "🐳");
+                        }
+                    }
+                    if (debugInfo.Errors.Length > 0)
+                    {
+                        foreach (var err in debugInfo.Errors)
+                            vm.Logger.Log($"❌ Docker debug: {err}", LogLevel.Error, "❌");
+                    }
+                }
+                catch (Exception debugEx)
+                {
+                    vm.Logger.Log($"⚠️ Docker debug: не удалось проверить /photos: {debugEx.Message}", LogLevel.Warning, "⚠️");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Docker: ошибка запуска compose: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show(ex.Message, "Docker", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void StopGalleryDocker_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        var wd = GetDockerComposeWorkingDirectory();
+        var composeFile = GetDockerComposeFilePath();
+        if (!File.Exists(composeFile))
+        {
+            vm.Logger.Log($"❌ Не найден docker-compose.yml: {composeFile}", LogLevel.Error, "❌");
+            return;
+        }
+
+        vm.Logger.Log("🐳 Docker: выполняю 'docker compose down --remove-orphans' (без удаления данных)...", LogLevel.Info, "🐳");
+        try
+        {
+            var (code, outText, errText) = await RunProcessAsync("docker", "compose down --remove-orphans", wd);
+            if (!string.IsNullOrWhiteSpace(outText)) vm.Logger.Log(outText, LogLevel.Info, "🐳");
+            if (!string.IsNullOrWhiteSpace(errText)) vm.Logger.Log(errText, code == 0 ? LogLevel.Warning : LogLevel.Error, code == 0 ? "⚠️" : "❌");
+
+            if (code != 0)
+            {
+                MessageBox.Show("Не удалось остановить Docker compose. Смотрите вкладку 'Лог'.", "Docker", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            vm.GalleryServiceStatus = "Не проверено";
+            vm.GalleryStats = "";
+            vm.GalleryIndexingStatus = "";
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Docker: ошибка остановки compose: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show(ex.Message, "Docker", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
     public MainWindow()
     {
@@ -114,7 +351,6 @@ public partial class MainWindow : Window
         int movedFiles = 0;
         var errors = new List<string>();
 
-        // Cancel any previous operation and create a new CTS
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -169,7 +405,6 @@ public partial class MainWindow : Window
                 }
                 catch (OperationCanceledException)
                 {
-                    // expected
                 }
                 catch (Exception ex)
                 {
@@ -244,7 +479,6 @@ public partial class MainWindow : Window
                 }
                 catch (OperationCanceledException)
                 {
-                    // expected
                 }
                 catch (Exception ex)
                 {
@@ -309,7 +543,6 @@ public partial class MainWindow : Window
 
         vm.Logger.Log($"🔍 Поиск дубликатов в: {vm.DuplicatesSearchFolder}", LogLevel.Info, "🔍");
 
-        // Cancel previous operation and create new CTS
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -328,7 +561,6 @@ public partial class MainWindow : Window
 
         progressDialog.CancelRequested += OnCancel;
 
-        // Progress reporter
         var progress = new Progress<(int processed, int total, string? current)>(t =>
         {
             try
@@ -369,7 +601,6 @@ public partial class MainWindow : Window
             }
             catch (OperationCanceledException)
             {
-                // Cancellation already logged
                 return;
             }
 
@@ -408,7 +639,6 @@ public partial class MainWindow : Window
         }
     }
 
-    // SIMPLIFIED METHOD (kept for compatibility)
     private async Task<List<DuplicateGroup>?> GetDuplicateGroupsAsync(
      string folderPath,
      bool isRecursive,
@@ -530,7 +760,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Запрещаем выбор корня диска
         var root = Path.GetPathRoot(folder);
         if (!string.IsNullOrEmpty(root) && string.Equals(root.TrimEnd('\\'), folder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
         {
@@ -544,7 +773,6 @@ public partial class MainWindow : Window
 
         vm.Logger.Log($"🧹 Начало очистки папки: {folder}", LogLevel.Info, "🧹");
 
-        // 1) Собираем кандидатов
         var candidates = new List<(string path, string reason)>();
 
         string[] allFiles;
@@ -623,7 +851,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Логируем найденное (для прозрачности)
         vm.Logger.Log($"🧹 Очистка: найдено кандидатов — {candidates.Count}.", LogLevel.Info, "🧹");
         foreach (var (path, reason) in candidates)
         {
@@ -634,7 +861,6 @@ public partial class MainWindow : Window
             catch { }
         }
 
-        // Подтверждение перед переносом
         var confirm = MessageBox.Show(
             $"Найдено файлов: {candidates.Count}\n\nПереместить в карантин?",
             "Очистка — подтверждение",
@@ -647,7 +873,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 2) Только теперь создаём карантин
         string quarantineDir;
         try
         {
@@ -670,7 +895,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 3) Перемещаем
         int movedCount = 0;
         int failedCount = 0;
 
@@ -717,7 +941,6 @@ public partial class MainWindow : Window
 
         if (movedCount == 0)
         {
-            // Ничего не перемещено — чтобы не плодить пустые папки, удаляем карантин
             try
             {
                 if (Directory.Exists(quarantineDir) && !Directory.EnumerateFileSystemEntries(quarantineDir).Any())
@@ -1000,6 +1223,425 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region Tab: AI Content Sorting
+
+    private void SelectAiSourceFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog();
+        if (dialog.ShowDialog() && DataContext is MainViewModel vm)
+        {
+            vm.AiSourceFolder = dialog.FolderName ?? string.Empty;
+            vm.Logger.Log($"🤖 AI источник: {dialog.FolderName}", LogLevel.Info, "🤖");
+        }
+    }
+
+    private void SelectAiOutputFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog();
+        if (dialog.ShowDialog() && DataContext is MainViewModel vm)
+        {
+            vm.AiOutputFolder = dialog.FolderName ?? string.Empty;
+            vm.Logger.Log($"🤖 AI результат: {dialog.FolderName}", LogLevel.Info, "🤖");
+        }
+    }
+
+    private async void CheckDocker_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        vm.AiDockerStatus = "Проверяю...";
+        vm.Logger.Log("🐳 Проверка Docker CLIP-сервиса...", LogLevel.Info, "🐳");
+
+        using var classifier = new ImageClassificationService();
+        bool available = await classifier.IsAvailableAsync();
+
+        if (available)
+        {
+            vm.AiDockerStatus = "✅ CLIP-сервис доступен";
+            vm.Logger.Log("✅ Docker CLIP-сервис работает (http://localhost:8000)", LogLevel.Info, "✅");
+        }
+        else
+        {
+            vm.AiDockerStatus = "❌ Сервис недоступен";
+            vm.Logger.Log("❌ Docker CLIP-сервис недоступен. Убедитесь, что контейнер запущен: docker compose up -d (из папки docker/)", LogLevel.Error, "❌");
+        }
+    }
+
+    private async void StartAiSorting_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        if (string.IsNullOrWhiteSpace(vm.AiSourceFolder))
+        {
+            MessageBox.Show("Выберите папку-источник.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(vm.AiOutputFolder))
+        {
+            MessageBox.Show("Выберите папку для результата.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!Directory.Exists(vm.AiSourceFolder))
+        {
+            MessageBox.Show($"Папка не существует: {vm.AiSourceFolder}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        using var classifier = new ImageClassificationService();
+        bool available = await classifier.IsAvailableAsync();
+        if (!available)
+        {
+            MessageBox.Show(
+                "CLIP-сервис недоступен!\n\nЗапустите Docker-контейнер:\n" +
+                "1) Откройте терминал в папке docker/\n" +
+                "2) Выполните: docker compose up -d\n" +
+                "3) Дождитесь загрузки модели (~1 мин)\n" +
+                "4) Нажмите «Проверить Docker»",
+                "Docker не запущен",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+
+        var progressDialog = new ProgressDialog("AI-сортировка", "Классификация изображений...");
+        progressDialog.Owner = this;
+
+        void OnCancel(object? s, EventArgs args)
+        {
+            _cts?.Cancel();
+            vm.Logger.Log("⚠️ AI-сортировка отменена.", LogLevel.Warning, "⚠️");
+        }
+
+        progressDialog.CancelRequested += OnCancel;
+
+        var progress = new Progress<(int processed, int total, string? current)>(t =>
+        {
+            try
+            {
+                var statusText = t.total > 0
+                    ? $"AI: {t.processed}/{t.total}"
+                    : $"AI: {t.processed}";
+                progressDialog.UpdateStatus(statusText);
+
+                if (!string.IsNullOrEmpty(t.current))
+                    progressDialog.UpdateDetail(t.current);
+            }
+            catch { }
+        });
+
+        List<string>? categories = null;
+        if (!string.IsNullOrWhiteSpace(vm.AiCategories))
+        {
+            categories = vm.AiCategories
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(c => c.Length > 0)
+                .ToList();
+        }
+
+        int sorted = 0;
+        var errors = new List<string>();
+
+        try
+        {
+            progressDialog.Show();
+
+            vm.Logger.Log($"🤖 AI-сортировка: {vm.AiSourceFolder} → {vm.AiOutputFolder}", LogLevel.Info, "🤖");
+
+            await Task.Run(async () =>
+            {
+                var service = new ContentSortingService(classifier, msg =>
+                {
+                    vm.Logger.Log($"🤖 {msg}", LogLevel.Info, "🤖");
+                });
+
+                var result = await service.SortByContentAsync(
+                    vm.AiSourceFolder,
+                    vm.AiOutputFolder,
+                    vm.IsAiRecursive,
+                    categories,
+                    vm.AiMinConfidence,
+                    progress,
+                    _cts!.Token);
+
+                sorted = result.Sorted;
+                errors = result.Errors;
+            }, _cts.Token);
+
+            if (!_cts.IsCancellationRequested)
+            {
+                vm.Logger.Log($"✅ AI-сортировка завершена. Рассортировано: {sorted}. Ошибок: {errors.Count}", LogLevel.Info, "✅");
+
+                if (errors.Count > 0)
+                {
+                    foreach (var error in errors)
+                        vm.Logger.Log(error, LogLevel.Error, "❌");
+                }
+
+                MessageBox.Show(
+                    $"AI-сортировка завершена!\n\nРассортировано файлов: {sorted}\nОшибок: {errors.Count}\n\nРезультат: {vm.AiOutputFolder}",
+                    "Готово",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            vm.Logger.Log("⚠️ AI-сортировка отменена.", LogLevel.Warning, "⚠️");
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Критическая ошибка AI-сортировки: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            progressDialog.CancelRequested -= OnCancel;
+            progressDialog.Close();
+        }
+    }
+
+    #endregion
+
+    #region Tab: Gallery
+
+    private void SelectGalleryFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog();
+        if (dialog.ShowDialog() && DataContext is MainViewModel vm)
+        {
+            vm.GalleryFolder = dialog.FolderName ?? string.Empty;
+            vm.Logger.Log($"🌐 Галерея — выбрана папка: {dialog.FolderName}", LogLevel.Info, "🌐");
+        }
+    }
+
+    private async void CheckGalleryService_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        vm.GalleryServiceStatus = "Проверяю...";
+        vm.Logger.Log("🌐 Проверка gallery-сервиса...", LogLevel.Info, "🌐");
+
+        using var gallery = new GalleryService();
+        bool available = await gallery.IsAvailableAsync();
+
+        if (available)
+        {
+            vm.GalleryServiceStatus = "✅ Gallery-сервис доступен";
+            vm.Logger.Log("✅ Gallery-сервис работает (http://localhost:8080)", LogLevel.Info, "✅");
+
+            try
+            {
+                var stats = await gallery.GetStatsAsync();
+                vm.GalleryStats = $"📸 Фото: {stats.TotalPhotos}  |  📁 Альбомов: {stats.TotalAlbums}  |  📅 Лет: {stats.Years.Length}";
+            }
+            catch { }
+        }
+        else
+        {
+            vm.GalleryServiceStatus = "❌ Сервис недоступен";
+            vm.Logger.Log("❌ Gallery-сервис недоступен. Запустите: docker compose up -d (из папки docker/)", LogLevel.Error, "❌");
+        }
+    }
+
+    private int _currentGalleryTaskId;
+
+    private async void StartGalleryIndexing_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        if (string.IsNullOrWhiteSpace(vm.GalleryFolder))
+        {
+            MessageBox.Show("Выберите папку с фотографиями.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var photosDirEnv = Environment.GetEnvironmentVariable("PHOTOS_DIR");
+        string dockerPath;
+        if (!string.IsNullOrWhiteSpace(photosDirEnv))
+        {
+            try
+            {
+                var selectedFull = Path.GetFullPath(vm.GalleryFolder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var photosFull = Path.GetFullPath(photosDirEnv).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                if (selectedFull.Equals(photosFull, StringComparison.OrdinalIgnoreCase))
+                {
+                    dockerPath = "/photos";
+                }
+                else if (selectedFull.StartsWith(photosFull + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    var rel = selectedFull.Substring(photosFull.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    dockerPath = "/photos/" + rel.Replace('\\', '/');
+                }
+                else
+                {
+                    dockerPath = "/photos";
+                    vm.Logger.Log($"⚠️ Выбранная папка не внутри PHOTOS_DIR ({photosDirEnv}). Будет проиндексирован root /photos.", LogLevel.Warning, "⚠️");
+                }
+            }
+            catch
+            {
+                dockerPath = "/photos";
+            }
+        }
+        else
+        {
+            dockerPath = "/photos";
+        }
+
+        using var gallery = new GalleryService();
+        bool available = await gallery.IsAvailableAsync();
+        if (!available)
+        {
+            MessageBox.Show(
+                "Gallery-сервис недоступен!\n\nЗапустите Docker:\n" +
+                "1) Откройте терминал в папке docker/\n" +
+                "2) Выполните: docker compose up -d\n" +
+                "3) Дождитесь запуска (~30 сек)\n" +
+                "4) Нажмите «Проверить сервис»",
+                "Docker не запущен",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        vm.Logger.Log($"🌐 Запуск индексации: {vm.GalleryFolder} (в Docker: {dockerPath})", LogLevel.Info, "🌐");
+        vm.GalleryIndexingStatus = "Запуск индексации...";
+
+        try
+        {
+            var result = await gallery.StartIndexingAsync(dockerPath, vm.GalleryRecursive, vm.GalleryUseAi);
+            _currentGalleryTaskId = result.TaskId;
+            vm.GalleryIndexingStatus = $"Индексация запущена (задача #{result.TaskId})";
+            vm.Logger.Log($"🌐 Индексация запущена, задача #{result.TaskId}", LogLevel.Info, "🌐");
+
+            _ = PollGalleryIndexingStatus(vm, result.TaskId);
+        }
+        catch (Exception ex)
+        {
+            vm.GalleryIndexingStatus = $"Ошибка: {ex.Message}";
+            vm.Logger.Log($"❌ Ошибка запуска индексации: {ex.Message}", LogLevel.Error, "❌");
+        }
+    }
+
+    private async Task PollGalleryIndexingStatus(MainViewModel vm, int taskId)
+    {
+        using var gallery = new GalleryService();
+        try
+        {
+            while (true)
+            {
+                await Task.Delay(2000);
+                var status = await gallery.GetIndexingStatusAsync(taskId);
+
+                string progressText = status.TotalFiles > 0
+                    ? $"{status.ProcessedFiles}/{status.TotalFiles}"
+                    : $"{status.ProcessedFiles} файлов";
+
+                vm.GalleryIndexingStatus = status.Status switch
+                {
+                    "running" => $"⏳ Индексация: {progressText}",
+                    "completed" => $"✅ Индексация завершена: {progressText}",
+                    "error" => $"❌ Ошибка: {status.Error}",
+                    _ => $"Статус: {status.Status}"
+                };
+
+                if (status.Status is "completed" or "error")
+                {
+                    if (status.Status == "completed")
+                    {
+                        vm.Logger.Log($"✅ Индексация завершена: {status.ProcessedFiles} файлов", LogLevel.Info, "✅");
+
+                        try
+                        {
+                            var stats = await gallery.GetStatsAsync();
+                            vm.GalleryStats = $"📸 Фото: {stats.TotalPhotos}  |  📁 Альбомов: {stats.TotalAlbums}  |  📅 Лет: {stats.Years.Length}";
+                        }
+                        catch { }
+                    }
+                    else
+                    {
+                        vm.Logger.Log($"❌ Индексация завершилась с ошибкой: {status.Error}", LogLevel.Error, "❌");
+                    }
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            vm.GalleryIndexingStatus = $"Ошибка опроса: {ex.Message}";
+        }
+    }
+
+    private async void RefreshGalleryStatus_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        using var gallery = new GalleryService();
+        try
+        {
+            bool available = await gallery.IsAvailableAsync();
+            if (!available)
+            {
+                vm.GalleryServiceStatus = "❌ Сервис недоступен";
+                vm.GalleryStats = "";
+                return;
+            }
+
+            vm.GalleryServiceStatus = "✅ Gallery-сервис доступен";
+
+            var stats = await gallery.GetStatsAsync();
+            vm.GalleryStats = $"📸 Фото: {stats.TotalPhotos}  |  📁 Альбомов: {stats.TotalAlbums}  |  📅 Лет: {stats.Years.Length}";
+
+            if (_currentGalleryTaskId > 0)
+            {
+                var status = await gallery.GetIndexingStatusAsync(_currentGalleryTaskId);
+                string progressText = status.TotalFiles > 0
+                    ? $"{status.ProcessedFiles}/{status.TotalFiles}"
+                    : $"{status.ProcessedFiles} файлов";
+
+                vm.GalleryIndexingStatus = status.Status switch
+                {
+                    "running" => $"⏳ Индексация: {progressText}",
+                    "completed" => $"✅ Индексация завершена: {progressText}",
+                    "error" => $"❌ Ошибка: {status.Error}",
+                    _ => $"Статус: {status.Status}"
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            vm.GalleryStats = $"Ошибка: {ex.Message}";
+        }
+    }
+
+    private void OpenGallery_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "http://localhost:8080",
+                UseShellExecute = true
+            });
+
+            if (DataContext is MainViewModel vm)
+                vm.Logger.Log("🌐 Открыта галерея в браузере: http://localhost:8080", LogLevel.Info, "🌐");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Не удалось открыть браузер: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    #endregion
+
     #region Menu
 
     private void Exit_Click(object sender, RoutedEventArgs e) => Close();
@@ -1077,66 +1719,8 @@ public partial class MainWindow : Window
     </div>
 
     <div class='section'>
-        <h2>2. Вкладка «Сортировка»</h2>
-        <h3>Как работает</h3>
-        <ul>
-            <li>Выберите папку-источник.</li>
-            <li>Выберите тип файлов: фото/видео/фото+видео/документы.</li>
-            <li>Дата берётся из метаданных (EXIF), иначе — из даты создания файла.</li>
-            <li>Структура: <code>Год/</code> или <code>Год/Месяц/</code> (если включено «Разбивать по месяцам»).</li>
-        </ul>
-        <h3>Опции</h3>
-        <ul>
-            <li><strong>Рекурсивный поиск</strong> — обрабатывать подпапки.</li>
-            <li><strong>Разбивать по месяцам</strong> — год/месяц вместо только года.</li>
-            <li><strong>Создать бэкап</strong> — создать резервную копию исходной папки перед сортировкой.</li>
-        </ul>
-    </div>
-
-    <div class='section'>
-        <h2>3. Вкладка «Дубликаты»</h2>
-        <ul>
-            <li>Выберите папку для поиска.</li>
-            <li>Можно включить рекурсивный поиск.</li>
-            <li>Выберите тип файлов (фото/видео/фото+видео/документы).</li>
-            <li>Результат показывается группами; лишние файлы можно отправить в карантин.</li>
-        </ul>
-    </div>
-
-    <div class='section'>
-        <h2>4. Вкладка «Очистка»</h2>
-        <ul>
-            <li>Выберите папку для очистки.</li>
-            <li>Опции: рекурсивно, скриншоты, временные файлы, пустые файлы.</li>
-            <li>Найденные элементы перемещаются в подкаталог карантина внутри выбранной папки.</li>
-        </ul>
-    </div>
-
-    <div class='section'>
-        <h2>5. Вкладка «Переименование»</h2>
-        <ul>
-            <li>Выберите папку.</li>
-            <li>Выберите шаблон или задайте свой.</li>
-            <li>Доступные блоки: <code>{date}</code>, <code>{year}</code>, <code>{month}</code>, <code>{day}</code>, <code>{index}</code>, <code>{name}</code>.</li>
-            <li>Показывается превью результата.</li>
-        </ul>
-    </div>
-
-    <div class='section'>
-        <h2>6. Вкладка «Каталог»</h2>
-        <ul>
-            <li>Генерирует HTML-каталог выбранной папки.</li>
-            <li>Можно включить/выключить отображение файлов и размеров.</li>
-            <li>Файл сохраняется как <code>catalog_YYYYMMDD_HHMMSS.html</code> в выбранной папке.</li>
-        </ul>
-    </div>
-
-    <div class='section'>
-        <h2>7. Вкладка «Лог»</h2>
-        <ul>
-            <li>Отображает сообщения о ходе операций.</li>
-            <li>Можно сохранить лог в текстовый файл.</li>
-        </ul>
+        <h2>2–9. Описания вкладок</h2>
+        <p>Подробное описание каждой вкладки доступно в интерфейсе приложения.</p>
     </div>
 
     <hr>

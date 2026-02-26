@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set active_page = "timeline" %}
+
+{% block title %}Таймлайн{% if year %} — {{ year }}{% endif %}{% if month %}/{{ month }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h2>?? Таймлайн
+        {% if year %} — {{ year }}{% endif %}
+        {% if month and month_names %} / {{ month_names.get(month, month) }}{% endif %}
+    </h2>
+    <span style="color: var(--text-subtle); font-size: 14px;">{{ total }} фото</span>
+</div>
+
+<!-- Year filters -->
+{% if years %}
+<div class="filters">
+    <a href="/timeline" class="filter-btn {% if not year %}active{% endif %}">Все</a>
+    {% for y in years %}
+    <a href="/timeline?year={{ y }}" class="filter-btn {% if year == y %}active{% endif %}">{{ y }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Month filters (if year selected) -->
+{% if months %}
+<div class="filters">
+    <a href="/timeline?year={{ year }}" class="filter-btn {% if not month %}active{% endif %}">Все месяцы</a>
+    {% for m in months %}
+    <a href="/timeline?year={{ year }}&month={{ m.num }}" class="filter-btn {% if month == m.num %}active{% endif %}">{{ m.name }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if photos %}
+<div class="photo-grid">
+    {% for photo in photos %}
+    <a href="/photo/{{ photo.id }}/view" class="photo-item">
+        <img src="/thumb/{{ photo.id }}" alt="{{ photo.file_name }}" loading="lazy">
+        <div class="overlay">
+            {{ photo.file_name }}
+            {% if photo.date_taken %}<br>{{ photo.date_taken[:10] }}{% endif %}
+            {% if photo.ai_category %}<br>?? {{ photo.ai_category }}{% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="/timeline?{% if year %}year={{ year }}&{% endif %}{% if month %}month={{ month }}&{% endif %}page={{ page - 1 }}">? Назад</a>
+    {% endif %}
+
+    {% for p in range(1, pages + 1) %}
+        {% if p == page %}
+        <span class="current">{{ p }}</span>
+        {% elif p <= 3 or p >= pages - 2 or (p >= page - 2 and p <= page + 2) %}
+        <a href="/timeline?{% if year %}year={{ year }}&{% endif %}{% if month %}month={{ month }}&{% endif %}page={{ p }}">{{ p }}</a>
+        {% elif p == 4 or p == pages - 3 %}
+        <span>…</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if page < pages %}
+    <a href="/timeline?{% if year %}year={{ year }}&{% endif %}{% if month %}month={{ month }}&{% endif %}page={{ page + 1 }}">Вперёд ?</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="icon">??</div>
+    <h3>Нет фотографий</h3>
+    <p>По выбранным фильтрам фотографии не найдены</p>
+</div>
+{% endif %}
+{% endblock %}

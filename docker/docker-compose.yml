@@ -1,0 +1,38 @@
+services:
+  clip-service:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  gallery:
+    build: ./gallery
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CLIP_SERVICE_URL=http://clip-service:8000
+    volumes:
+      - gallery-data:/data
+      - ${PHOTOS_DIR:-C:/Users/Public/Pictures}:/photos:ro
+    depends_on:
+      clip-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  gallery-data:

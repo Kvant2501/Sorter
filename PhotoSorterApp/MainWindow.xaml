@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PhotoSorterApp.ViewModels"
         xmlns:models="clr-namespace:PhotoSorterApp.Models"
-        Title="PhotoSorter" Height="560" Width="820" ResizeMode="NoResize">
+        Title="PhotoSorter" Height="720" Width="980" MinHeight="640" MinWidth="900" ResizeMode="CanResize">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -398,6 +398,182 @@
                 </Grid>
             </TabItem>
 
+            <!-- AI Content Sorting tab -->
+            <TabItem Header="AI-сортировка">
+                <DockPanel Margin="10">
+                    <!-- Start button always visible at bottom -->
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Content="Запустить AI-сортировку" Click="StartAiSorting_Click" Width="220"/>
+                    </StackPanel>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <!-- Description -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Сортировка по содержимому (AI)" Style="{StaticResource HeaderText}" Margin="0,0,0,4"/>
+                                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource SubtleTextBrush}"
+                                               Text="Нейросеть CLIP анализирует содержимое каждого фото и раскладывает по тематическим папкам. Требуется запущенный Docker-контейнер."/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                        <Button x:Name="CheckDockerButton" Content="Проверить Docker" Click="CheckDocker_Click" Width="140" Margin="0,0,10,0"/>
+                                        <TextBlock x:Name="DockerStatusText" Text="{Binding AiDockerStatus}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Source folder -->
+                            <Border Style="{StaticResource CardCompact}" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Папка-источник" Margin="0,0,0,4" FontWeight="SemiBold"/>
+                                    <DockPanel LastChildFill="True">
+                                        <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать" Click="SelectAiSourceFolder_Click" Width="100" Margin="0,0,10,0"/>
+                                        <Border Style="{StaticResource TextBoxLike}">
+                                            <TextBlock Text="{Binding AiSourceFolder, FallbackValue=Не выбрана}" TextWrapping="Wrap"/>
+                                        </Border>
+                                    </DockPanel>
+                                    <TextBlock Text="Папка результата" Margin="0,6,0,4" FontWeight="SemiBold"/>
+                                    <DockPanel LastChildFill="True">
+                                        <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать" Click="SelectAiOutputFolder_Click" Width="100" Margin="0,0,10,0"/>
+                                        <Border Style="{StaticResource TextBoxLike}">
+                                            <TextBlock Text="{Binding AiOutputFolder, FallbackValue=Не выбрана}" TextWrapping="Wrap"/>
+                                        </Border>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Parameters -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Параметры" Style="{StaticResource HeaderText}" Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <CheckBox Content="Рекурсивно" IsChecked="{Binding IsAiRecursive}" Margin="0,0,10,0"/>
+                                        <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">Обрабатывать все подпапки внутри выбранной папки.</TextBlock>
+                                                </ToolTip>
+                                            </TextBlock.ToolTip>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Text="Минимальная уверенность (0.05 – 0.50):" Margin="0,0,0,2"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider Minimum="0.05" Maximum="0.50" Value="{Binding AiMinConfidence}" TickFrequency="0.05" IsSnapToTickEnabled="True" Width="250"/>
+                                        <TextBlock Text="{Binding AiMinConfidence, StringFormat='{}{0:P0}'}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Рекомендуется: 15–25%. Модель ViT-L-14 обычно даёт 50–90% для верных категорий." 
+                                               Foreground="{DynamicResource SubtleTextBrush}" FontStyle="Italic" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Custom categories -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,4">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="Свои категории" Style="{StaticResource HeaderText}"/>
+                                        <TextBlock Style="{DynamicResource HelpIconStyle}" Margin="6,0,0,0">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" MaxWidth="380">Перечислите через запятую свои категории. Если оставить пустым — используются стандартные (люди, природа, животные, еда и т.д.).</TextBlock>
+                                                </ToolTip>
+                                            </TextBlock.ToolTip>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <TextBox Text="{Binding AiCategories, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="36" TextWrapping="Wrap" AcceptsReturn="False"
+                                             ToolTip="Пример: люди, природа, еда, документы, автомобили"/>
+                                    <TextBlock Text="Пример: люди, природа, еда, документы, автомобили" Foreground="{DynamicResource SubtleTextBrush}" FontStyle="Italic" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <!-- Gallery tab -->
+            <TabItem Header="Галерея">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Folder selection -->
+                        <Border Grid.Row="0" Style="{StaticResource CardCompact}" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="Папка с фотографиями" Margin="0,0,0,4" FontWeight="SemiBold"/>
+                                <DockPanel LastChildFill="True">
+                                    <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Выбрать папку" Click="SelectGalleryFolder_Click" Width="150" Margin="0,0,10,0"/>
+                                    <Border Style="{StaticResource TextBoxLike}">
+                                        <TextBlock Text="{Binding GalleryFolder, FallbackValue=Не выбрана}" TextWrapping="Wrap"/>
+                                    </Border>
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Docker controls -->
+                        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="Docker" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                                <WrapPanel>
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Запустить Docker" Width="160" Margin="0,0,10,10" Click="StartGalleryDocker_Click"/>
+                                    <Button Style="{StaticResource SecondaryButton}" Content="Остановить Docker" Width="160" Margin="0,0,10,10" Click="StopGalleryDocker_Click"/>
+                                </WrapPanel>
+                                <TextBlock Text="Подсказка: запускается 'docker compose up -d' из папки docker/ (без удаления данных)." Opacity="0.8" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Service status -->
+                        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="Статус сервиса" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <Button Content="Проверить сервис" Click="CheckGalleryService_Click" Width="150" Margin="0,0,10,0"/>
+                                    <Button Content="Обновить" Click="RefreshGalleryStatus_Click" Width="100" Margin="0,0,10,0"/>
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Открыть галерею" Click="OpenGallery_Click" Width="150"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding GalleryServiceStatus}" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                                <TextBlock Text="{Binding GalleryStats}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Indexing -->
+                        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="Индексация" Style="{StaticResource HeaderText}" Margin="0,0,0,8"/>
+                                <WrapPanel Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,18,6">
+                                        <CheckBox Content="Рекурсивно" IsChecked="{Binding GalleryRecursive}" Margin="0,0,6,0"/>
+                                        <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">Индексировать все подпапки внутри выбранной папки.</TextBlock>
+                                                </ToolTip>
+                                            </TextBlock.ToolTip>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,18,6">
+                                        <CheckBox Content="AI-классификация" IsChecked="{Binding GalleryUseAi}" Margin="0,0,6,0"/>
+                                        <TextBlock Style="{DynamicResource HelpIconStyle}">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" MaxWidth="300">Использовать CLIP-нейросеть для автоматической классификации фотографий по категориям.</TextBlock>
+                                                </ToolTip>
+                                            </TextBlock.ToolTip>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </WrapPanel>
+                                <Button Style="{StaticResource PrimaryButton}" Content="Запустить индексацию" Click="StartGalleryIndexing_Click" Width="180" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+                                <TextBlock Text="{Binding GalleryIndexingStatus}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- Log tab -->
             <TabItem Header="Лог">
                 <Grid Margin="10">
@@ -406,7 +582,6 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Styled ListBox for log output: supports alternating row backgrounds and uses theme brushes -->
                     <ListBox Grid.Row="0" ItemsSource="{Binding Logger}"
                              Background="{DynamicResource SurfaceBrush}"
                              Foreground="{DynamicResource TextBrush}"
@@ -443,7 +618,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- NEW: Catalog tab -->
+            <!-- Catalog tab -->
             <TabItem Header="Каталог">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>

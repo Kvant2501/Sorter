@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Неизвестные лица</h2>
+<p style="opacity:0.8">Нажмите на лицо, введите имя и сохраните. После этого появится альбом с этим человеком.</p>
+
+{% if faces|length == 0 %}
+  <div class="card" style="padding:16px;">Неизвестных лиц нет.</div>
+{% else %}
+  <div style="display:flex; flex-wrap:wrap; gap:12px;">
+    {% for f in faces %}
+      <div class="card" style="padding:12px; width:180px;">
+        <a href="/photo/{{ f.photo_id }}/view" title="Открыть фото">
+          <img src="/face/{{ f.face_id }}.jpg?size=320" style="width:160px; height:160px; object-fit:cover; border-radius:10px;" />
+        </a>
+        <div style="margin-top:8px; font-size:12px; opacity:0.8;">Фото: {{ f.file_name }}</div>
+
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <input id="name_{{ f.face_id }}" type="text" placeholder="Имя" style="flex:1; padding:6px; border-radius:8px; border:1px solid rgba(0,0,0,0.2);" />
+          <button onclick="labelFace({{ f.face_id }})" style="padding:6px 10px; border-radius:8px;">OK</button>
+        </div>
+        <div id="msg_{{ f.face_id }}" style="margin-top:6px; font-size:12px;"></div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<script>
+async function labelFace(faceId) {
+  const input = document.getElementById('name_' + faceId);
+  const msg = document.getElementById('msg_' + faceId);
+  const name = (input.value || '').trim();
+  if (!name) {
+    msg.textContent = 'Введите имя';
+    return;
+  }
+
+  msg.textContent = 'Сохраняю...';
+
+  const resp = await fetch('/api/faces/' + faceId + '/label', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+
+  if (!resp.ok) {
+    const t = await resp.text();
+    msg.textContent = 'Ошибка: ' + t;
+    return;
+  }
+
+  msg.textContent = 'Готово';
+  // hide card softly
+  setTimeout(() => {
+    const card = input.closest('.card');
+    if (card) card.style.display = 'none';
+  }, 600);
+}
+</script>
+
+{% endblock %}

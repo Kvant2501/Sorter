@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% set active_page = "" %}
+
+{% block title %}{{ photo.file_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .viewer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="viewer-container">
+    <div class="viewer">
+        <img src="/photo/{{ photo.id }}" alt="{{ photo.file_name }}">
+    </div>
+
+    <div class="viewer-nav">
+        {% if prev_id %}
+        <a href="/photo/{{ prev_id }}/view">? Предыдущее</a>
+        {% endif %}
+        <a href="/timeline">?? Таймлайн</a>
+        {% if next_id %}
+        <a href="/photo/{{ next_id }}/view">Следующее ?</a>
+        {% endif %}
+    </div>
+
+    <table class="meta-table">
+        <tr><td>?? Файл</td><td>{{ photo.file_name }}</td></tr>
+        {% if photo.date_taken %}
+        <tr><td>?? Дата</td><td>{{ photo.date_taken[:19] }}</td></tr>
+        {% endif %}
+        {% if photo.width and photo.height %}
+        <tr><td>?? Размер</td><td>{{ photo.width }} ? {{ photo.height }}</td></tr>
+        {% endif %}
+        {% if photo.file_size %}
+        <tr><td>?? Объём</td><td>{{ "%.1f"|format(photo.file_size / 1048576) }} МБ</td></tr>
+        {% endif %}
+        {% if photo.camera_make or photo.camera_model %}
+        <tr><td>?? Камера</td><td>{{ photo.camera_make or '' }} {{ photo.camera_model or '' }}</td></tr>
+        {% endif %}
+        {% if photo.ai_category %}
+        <tr><td>?? AI-категория</td><td>{{ photo.ai_category }} ({{ "%.0f"|format((photo.ai_confidence or 0) * 100) }}%)</td></tr>
+        {% endif %}
+        <tr><td>?? Путь</td><td style="font-size: 12px; word-break: break-all;">{{ photo.file_path }}</td></tr>
+    </table>
+</div>
+{% endblock %}
