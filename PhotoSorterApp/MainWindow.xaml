@@ -398,6 +398,65 @@
                 </Grid>
             </TabItem>
 
+            <!-- Faces tab -->
+            <TabItem Header="Лица">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Style="{StaticResource CardCompact}">
+                        <DockPanel LastChildFill="True">
+                            <Button Style="{StaticResource FolderPickerButton}" DockPanel.Dock="Left" Content="Папка с фото" Click="SelectFaceIndexFolder_Click" Width="150" Margin="0,0,10,0"/>
+                            <Border Style="{StaticResource TextBoxLike}">
+                                <TextBlock Text="{Binding FaceIndexFolder, FallbackValue=Не выбрана}" TextWrapping="Wrap"/>
+                            </Border>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <WrapPanel>
+                            <CheckBox Content="Рекурсивно" IsChecked="{Binding FaceIndexRecursive}" Margin="0,0,18,8"/>
+                            <CheckBox Content="Пересканировать все" IsChecked="{Binding FaceIndexRescan}" Margin="0,0,18,8" ToolTip="Переобработать уже индексированные фото для автораспознавания"/>
+                            <CheckBox Content="Диагностический лог" IsChecked="{Binding FaceDetailedLogging}" Margin="0,0,18,8" ToolTip="Показывать детальные записи по каждому файлу и лицу"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,18,8">
+                                <TextBlock Text="Порог:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource SubtleTextBrush}" FontSize="12"/>
+                                <Slider x:Name="ThresholdSlider" Width="100" Minimum="0.2" Maximum="0.9" Value="0.55" TickFrequency="0.05" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ElementName=ThresholdSlider, Path=Value, StringFormat='0.00'}" VerticalAlignment="Center" Width="35" FontSize="12"/>
+                                <TextBlock Text="(↑=строже)" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="{DynamicResource SubtleTextBrush}" FontSize="10"/>
+                            </StackPanel>
+                        </WrapPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource SubtleTextBrush}">После индексации нажмите «Подтвердить неизвестные лица», чтобы программа поочерёдно спрашивала кто изображён на фото.</TextBlock>
+                            <TextBlock Margin="0,8,0,0"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource SubtleTextBrush}"
+                                       FontStyle="Italic"
+                                       Text="{Binding FaceLastRunSummary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Orientation="Vertical" HorizontalAlignment="Right">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
+                            <Button Style="{StaticResource SecondaryButton}" Content="Веб-альбомы" Click="OpenWebGallery_Click" Width="130" Margin="0,0,10,0"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Персоны" Click="ManagePersons_Click" Width="120" Margin="0,0,10,0"/>
+                            <Button Style="{StaticResource DangerButton}" Content="Очистить базу лиц" Click="ResetFaceCatalog_Click" Width="170"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource SecondaryButton}" Content="Подтвердить неизвестные лица" Click="LabelUnknownFaces_Click" Width="220" Margin="0,0,10,0"/>
+                            <Button Style="{StaticResource PrimaryButton}" Content="Индексировать лица" Click="StartFaceIndexing_Click" Width="170"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
             <!-- Log tab -->
             <TabItem Header="Лог">
                 <Grid Margin="10">
@@ -492,6 +551,7 @@
                     </Border>
 
                     <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource SecondaryButton}" Content="Открыть веб-галерею" Click="OpenWebGallery_Click" Width="190" Margin="0,0,10,0"/>
                         <Button Style="{StaticResource PrimaryButton}" Content="Создать каталог" Click="GenerateCatalog_Click" Width="180"/>
                     </StackPanel>
                 </Grid>

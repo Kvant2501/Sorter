@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PhotoSorter Web Albums</title>
+  <style>
+    :root { --bg:#0b1220; --card:#111827; --muted:#9ca3af; --text:#e5e7eb; --accent:#60a5fa; --border:#1f2937; }
+    body { margin:0; font-family:Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); display:flex; }
+
+    .sidebar { width:300px; height:100vh; position:fixed; top:0; left:0; background:var(--card); border-right:1px solid var(--border); overflow-y:auto; padding:18px; box-sizing:border-box; }
+    .brand { margin:0 0 14px 0; font-size:1.35rem; color:white; }
+
+    .quick-actions { display:flex; gap:8px; margin-bottom:14px; }
+    .quick-actions button { flex:1; }
+
+    .nav-section { margin-bottom:20px; }
+    .nav-section details summary { cursor:pointer; outline:none; list-style:none; display:flex; align-items:center; user-select:none; margin-left: 2px; }
+    .nav-section details summary::-webkit-details-marker { display:none; }
+    .nav-section details summary h3 { font-size:.82rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin:0 0 0 4px; pointer-events: none; }
+    .nav-section details summary::before { content:'▶'; font-size: 0.7rem; color: var(--muted); transition: transform 0.2s; }
+    .nav-section details[open] summary::before { transform: rotate(90deg); }
+    .nav-section details > div { margin-top: 8px; }
+
+    .nav-item { display:flex; justify-content:space-between; align-items:center; width:100%; border:0; background:transparent; color:var(--text); padding:8px 10px; border-radius:8px; cursor:pointer; margin-bottom:4px; text-align:left; }
+    .nav-item:hover { background:var(--border); }
+    .nav-item.active { background:var(--accent); color:#fff; }
+    .nav-item .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+    .badge { font-size:.72rem; background:rgba(255,255,255,.12); border-radius:999px; padding:2px 8px; }
+    .nav-item.active .badge { background:rgba(255,255,255,.25); }
+
+    .archive-year { margin-bottom:6px; }
+    .archive-year > summary { list-style:none; cursor:pointer; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; }
+    .archive-year > summary:hover { background:var(--border); }
+    .archive-year[open] > summary { background:#17223b; }
+    .archive-months { padding-left:8px; margin-top:4px; }
+    .archive-month { font-size:.9rem; }
+
+    .main-content { margin-left:300px; width:calc(100% - 300px); box-sizing:border-box; min-height:100vh; padding:24px 28px; }
+    .group-header { font-size:1.2rem; font-weight:600; margin:24px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--border); color:var(--muted); }
+    .group-header:first-child { margin-top:0; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; position:relative; transition:transform .2s,border-color .2s; }
+    .card:hover { transform:scale(1.03); border-color:var(--accent); z-index:2; }
+    .img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:#020617; }
+    .meta-overlay { position:absolute; left:0; right:0; bottom:0; background:linear-gradient(to top, rgba(0,0,0,.78), transparent); padding:24px 10px 10px; pointer-events:none; }
+    .meta-title { color:white; font-weight:600; font-size:13px; text-shadow:1px 1px 2px rgba(0,0,0,.8); }
+
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+    .lightbox.hidden { display:none; }
+    .lb-img { max-width:90vw; max-height:80vh; object-fit:contain; border-radius:8px; }
+    .lb-close, .lb-download { position:absolute; top:20px; width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:rgba(15,23,42,.7); color:white; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+    .lb-close { right:20px; font-size:24px; }
+    .lb-download { right:74px; }
+    .lb-controls { position:absolute; top:50%; width:100%; display:flex; justify-content:space-between; transform:translateY(-50%); padding:0 20px; box-sizing:border-box; pointer-events:none; }
+    .lb-controls button { pointer-events:auto; width:50px; height:50px; border-radius:50%; border:1px solid var(--border); background:rgba(15,23,42,.7); color:white; font-size:20px; cursor:pointer; }
+    .lb-meta { margin-top:14px; min-width:250px; text-align:center; background:rgba(15,23,42,.8); padding:8px 16px; border-radius:8px; border:1px solid var(--border); }
+    .lb-meta .title { font-size:16px; font-weight:700; }
+    .tags { color:var(--muted); margin-top:6px; font-size:13px; }
+
+    button, .quick-actions button { background:#0b1220; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 10px; cursor:pointer; }
+    button:hover, .quick-actions button:hover { background:var(--border); }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" style="z-index:100;">
+    <h2 class="brand">PhotoSorter Albums</h2>
+
+    <div class="quick-actions">
+      <button id="btn-all" class="active">Все фото</button>
+      <button id="btn-rnd">Случайные</button>
+    </div>
+
+    <div class="nav-section">
+      <details open>
+        <summary><h3>Лица</h3></summary>
+        <div id="list-persons"></div>
+      </details>
+    </div>
+
+    <div class="nav-section">
+      <details open>
+        <summary><h3>Каталог папок</h3></summary>
+        <div id="list-folders"></div>
+      </details>
+    </div>
+
+    <div class="nav-section">
+      <details open>
+        <summary><h3>Фото по годам</h3></summary>
+        <div id="list-archive"></div>
+      </details>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div id="photos-container"></div>
+  </main>
+
+  <div id="lightbox" class="lightbox hidden">
+    <a id="lb-download" class="lb-download" href="#" title="Скачать оригинал" target="_blank">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+    </a>
+    <button class="lb-close" onclick="closeLightbox()">&times;</button>
+
+    <div class="lb-controls">
+      <button onclick="navLightbox(-1)">&#10094;</button>
+      <button onclick="navLightbox(1)">&#10095;</button>
+    </div>
+
+    <img id="lb-img" class="lb-img" src="" alt="Full image" />
+    <div id="lb-meta" class="lb-meta"></div>
+  </div>
+
+  <script>
+    const photosContainer = document.getElementById('photos-container');
+    const listPersons = document.getElementById('list-persons');
+    const listFolders = document.getElementById('list-folders');
+    const listArchive = document.getElementById('list-archive');
+
+    const lightbox = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lb-img');
+    const lbMeta = document.getElementById('lb-meta');
+    const lbDownload = document.getElementById('lb-download');
+
+    const btnAll = document.getElementById('btn-all');
+    const btnRnd = document.getElementById('btn-rnd');
+
+    let currentPhotos = [];
+    let currentIndex = 0;
+
+    let currentPerson = '';
+    let currentFolder = '';
+    let currentYear = null;
+    let currentMonth = null;
+    let currentSkip = 0;
+    let isFetching = false;
+    let hasMorePhotos = true;
+    let isRandomMode = false;
+
+    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+    function clearActiveFilters() {
+      document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+      btnAll.classList.remove('active');
+      btnRnd.classList.remove('active');
+    }
+
+    function resetFilters() {
+      currentPerson = '';
+      currentFolder = '';
+      currentYear = null;
+      currentMonth = null;
+    }
+
+    function makeNavItem(text, count, onClick, className = '') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `nav-item ${className}`.trim();
+      btn.innerHTML = `<span class="name">${text}</span>${typeof count === 'number' ? `<span class="badge">${count}</span>` : ''}`;
+      btn.addEventListener('click', onClick);
+      return btn;
+    }
+
+    async function safeFetchJson(url) {
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          console.warn(`Failed to load ${url}:`, resp.status);
+          return [];
+        }
+        return await resp.json();
+      } catch (e) {
+        console.warn(`Failed to load ${url}:`, e);
+        return [];
+      }
+    }
+
+    async function initSidebar() {
+      const [persons, folders, archive] = await Promise.all([
+        safeFetchJson('/api/persons'),
+        safeFetchJson('/api/folders'),
+        safeFetchJson('/api/archive')
+      ]);
+
+      listPersons.innerHTML = '';
+      for (const p of persons) {
+        const item = makeNavItem(p.displayName, p.facesCount, (e) => {
+          clearActiveFilters();
+          e.currentTarget.classList.add('active');
+          resetFilters();
+          currentPerson = p.displayName;
+          loadPhotos(false, false);
+        });
+        listPersons.appendChild(item);
+      }
+
+      listFolders.innerHTML = '';
+      for (const f of folders) {
+        const name = f.path.split('\\').pop().split('/').pop() || f.path;
+        const item = makeNavItem(name, f.photosCount, (e) => {
+          clearActiveFilters();
+          e.currentTarget.classList.add('active');
+          resetFilters();
+          currentFolder = f.path;
+          loadPhotos(false, false);
+        });
+        item.title = f.path;
+        listFolders.appendChild(item);
+      }
+
+      if (!folders.length) {
+        const hint = document.createElement('div');
+        hint.style.color = 'var(--muted)';
+        hint.style.fontSize = '.85rem';
+        hint.style.padding = '2px 10px';
+        hint.textContent = 'Папки недоступны';
+        listFolders.appendChild(hint);
+      }
+
+      listArchive.innerHTML = '';
+      const grouped = new Map();
+      for (const row of archive) {
+        if (!grouped.has(row.year)) grouped.set(row.year, []);
+        grouped.get(row.year).push(row);
+      }
+
+      for (const [year, months] of grouped) {
+        const details = document.createElement('details');
+        details.className = 'archive-year';
+        const total = months.reduce((s, m) => s + m.photosCount, 0);
+
+        const summary = document.createElement('summary');
+        summary.innerHTML = `<span>${year}</span><span class="badge">${total}</span>`;
+        details.appendChild(summary);
+
+        const monthsContainer = document.createElement('div');
+        monthsContainer.className = 'archive-months';
+
+        const yearBtn = makeNavItem('Весь год', total, (e) => {
+          clearActiveFilters();
+          e.currentTarget.classList.add('active');
+          resetFilters();
+          currentYear = year;
+          loadPhotos(false, false);
+        }, 'archive-month');
+        monthsContainer.appendChild(yearBtn);
+
+        for (const m of months) {
+          const mBtn = makeNavItem(monthNames[m.month - 1], m.photosCount, (e) => {
+            clearActiveFilters();
+            e.currentTarget.classList.add('active');
+            resetFilters();
+            currentYear = m.year;
+            currentMonth = m.month;
+            loadPhotos(false, false);
+          }, 'archive-month');
+          monthsContainer.appendChild(mBtn);
+        }
+
+        details.appendChild(monthsContainer);
+        listArchive.appendChild(details);
+      }
+    }
+
+    function photoCard(p, index) {
+      const encoded = encodeURIComponent(p.filePath);
+      const personsStr = p.persons?.join(', ') || '';
+      return `<div class="card" onclick="openLightbox(${index})">
+        <img loading="lazy" class="img" src="/api/image?path=${encoded}" alt="photo" />
+        <div class="meta-overlay">${personsStr ? `<div class="meta-title">${personsStr}</div>` : ''}</div>
+      </div>`;
+    }
+
+    function renderPhotos(photos, randomMode) {
+      if (!photos.length) return '<div style="padding:20px;color:var(--muted)">Ничего не найдено.</div>';
+
+      if (randomMode) {
+        return `<div class="grid">${photos.map((p, i) => photoCard(p, i)).join('')}</div>`;
+      }
+
+      let html = '';
+      let currentGroup = null;
+      let currentCards = [];
+
+      const groupName = (dateStr) => {
+        if (!dateStr) return 'Без даты';
+        const d = new Date(dateStr);
+        const s = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      };
+
+      const flush = () => {
+        if (!currentCards.length) return;
+        html += `<div class="group-header">${currentGroup}</div><div class="grid">${currentCards.join('')}</div>`;
+      };
+
+      for (let i = 0; i < photos.length; i++) {
+        const g = groupName(photos[i].capturedAtUtc);
+        if (g !== currentGroup) {
+          flush();
+          currentGroup = g;
+          currentCards = [];
+        }
+        currentCards.push(photoCard(photos[i], i));
+      }
+      flush();
+      return html;
+    }
+
+    async function loadPhotos(random = false, append = false) {
+      if (isFetching) return;
+
+      isFetching = true;
+      try {
+        if (!append) {
+          currentSkip = 0;
+          currentPhotos = [];
+          hasMorePhotos = true;
+          isRandomMode = random;
+        }
+
+        const qp = new URLSearchParams();
+        if (currentPerson) qp.set('person', currentPerson);
+        if (currentFolder) qp.set('folder', currentFolder);
+        if (currentYear) qp.set('year', currentYear);
+        if (currentMonth) qp.set('month', currentMonth);
+
+        let url;
+        if (isRandomMode) {
+          qp.set('count', '30');
+          url = '/api/random-selection?' + qp;
+        } else {
+          qp.set('skip', currentSkip.toString());
+          qp.set('take', '60');
+          url = '/api/photos?' + qp;
+        }
+
+        const newPhotos = await fetch(url).then(r => r.json());
+        if (!isRandomMode && (newPhotos.length === 0 || newPhotos.length < 60)) {
+          hasMorePhotos = false;
+        }
+        if (isRandomMode && newPhotos.length === 0) {
+          hasMorePhotos = false;
+        }
+
+        currentPhotos = append ? [...currentPhotos, ...newPhotos] : newPhotos;
+        photosContainer.innerHTML = renderPhotos(currentPhotos, isRandomMode);
+
+        if (!append) window.scrollTo(0, 0);
+        currentSkip += newPhotos.length;
+      } finally {
+        isFetching = false;
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!hasMorePhotos) return;
+      const nearBottom = window.scrollY + window.innerHeight > document.documentElement.scrollHeight - 500;
+      if (nearBottom) loadPhotos(isRandomMode, true);
+    });
+
+    function openLightbox(index) {
+      if (index < 0 || index >= currentPhotos.length) return;
+      currentIndex = index;
+      const p = currentPhotos[index];
+      const link = '/api/image?path=' + encodeURIComponent(p.filePath);
+
+      lbImg.src = link;
+      lbDownload.href = link;
+      lbDownload.download = (p.filePath || '').split('\\').pop().split('/').pop();
+
+      let meta = `<div class="title">${p.persons?.join(', ') || 'Нет данных о лицах'}</div>`;
+      meta += `<div style="color:var(--muted)">${p.capturedAtUtc ? new Date(p.capturedAtUtc).toLocaleString('ru-RU') : 'Нет даты'}</div>`;
+      if (p.tags?.length) meta += `<div class="tags">${p.tags.join(', ')}</div>`;
+      lbMeta.innerHTML = meta;
+
+      lightbox.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.add('hidden');
+      document.body.style.overflow = '';
+      lbImg.src = '';
+    }
+
+    function navLightbox(direction) {
+      let next = currentIndex + direction;
+      if (next < 0) next = currentPhotos.length - 1;
+      if (next >= currentPhotos.length) next = 0;
+      openLightbox(next);
+    }
+
+    btnAll.addEventListener('click', () => {
+      clearActiveFilters();
+      btnAll.classList.add('active');
+      resetFilters();
+      loadPhotos(false, false);
+    });
+
+    btnRnd.addEventListener('click', () => {
+      clearActiveFilters();
+      btnRnd.classList.add('active');
+      resetFilters();
+      loadPhotos(true, false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (lightbox.classList.contains('hidden')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navLightbox(-1);
+      if (e.key === 'ArrowRight') navLightbox(1);
+    });
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+
+    initSidebar();
+    btnAll.classList.add('active');
+    loadPhotos(false, false);
+  </script>
+</body>
+</html>

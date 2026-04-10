@@ -20,6 +20,7 @@ namespace PhotoSorterApp;
 public partial class MainWindow : Window
 {
     private CancellationTokenSource? _cts;
+    private Process? _webServerProcess;
 
     public MainWindow()
     {
@@ -67,6 +68,19 @@ public partial class MainWindow : Window
         base.OnClosed(e);
         _cts?.Cancel();
         _cts?.Dispose();
+
+        try
+        {
+            if (_webServerProcess is { HasExited: false })
+            {
+                _webServerProcess.Kill(true);
+                _webServerProcess.Dispose();
+            }
+        }
+        catch
+        {
+            // ignore process shutdown errors
+        }
     }
 
     #region Tab: Sorting
@@ -134,7 +148,7 @@ public partial class MainWindow : Window
         void OnCancel(object? s, EventArgs args)
         {
             _cts?.Cancel();
-            vm.Logger.Log($"⚠️ [{profileLabel}] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log($"⚠️ [{profileLabel}] Сортировка.cancelled пользователем.", LogLevel.Warning, "⚠️");
         }
 
         progressDialog.CancelRequested += OnCancel;
@@ -186,7 +200,7 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            vm.Logger.Log($"⚠️ [{profileLabel}] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log($"⚠️ [{profileLabel}] Сортировка.cancelled пользователем.", LogLevel.Warning, "⚠️");
         }
         catch (Exception ex)
         {
@@ -214,7 +228,7 @@ public partial class MainWindow : Window
         void OnCancel(object? s, EventArgs args)
         {
             _cts?.Cancel();
-            vm.Logger.Log("⚠️ [Документы] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log("⚠️ [Документы] Сортировка.cancelled пользователем.", LogLevel.Warning, "⚠️");
         }
 
         progressDialog.CancelRequested += OnCancel;
@@ -261,7 +275,7 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            vm.Logger.Log("⚠️ [Документы] Сортировка отменена пользователем.", LogLevel.Warning, "⚠️");
+            vm.Logger.Log("⚠️ [Документы] Сортировка.cancelled пользователем.", LogLevel.Warning, "⚠️");
         }
         catch (Exception ex)
         {
@@ -727,7 +741,7 @@ public partial class MainWindow : Window
 
             vm.Logger.Log($"🧹 Очистка: найдено файлов — {candidates.Count}, но переместить не удалось (ошибок: {failedCount}).", LogLevel.Warning, "🧹");
             MessageBox.Show(
-                $"Найдено файлов: {candidates.Count}\nПеремещено: 0\nОшибок: {failedCount}\n\n" +
+                $"Найдено файлов: {candidates.Count}\nПеремечено: 0\nОшибок: {failedCount}\n\n" +
                 "Файлы могли быть заняты другими программами или недоступны по правам.",
                 "Результат очистки",
                 MessageBoxButton.OK,
@@ -976,26 +990,401 @@ public partial class MainWindow : Window
 
             vm.Logger.Log($"✅ Каталог создан: {catalogPath}", LogLevel.Info, "✅");
 
-            var result = MessageBox.Show(
-                $"HTML-каталог успешно создан!\n\n{catalogPath}\n\nОткрыть в браузере?",
+            MessageBox.Show(
+                $"HTML-каталог успешно создан:\n\n{catalogPath}\n\nДля просмотра используйте кнопку \"Открыть веб-галерею\".",
                 "Готово",
-                MessageBoxButton.YesNo,
+                MessageBoxButton.OK,
                 MessageBoxImage.Information);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = catalogPath,
-                    UseShellExecute = true
-                });
-            }
         }
         catch (Exception ex)
         {
             vm.Logger.Log($"❌ Ошибка создания каталога: {ex.Message}", LogLevel.Error, "❌");
             MessageBox.Show($"Ошибка создания каталога:\n\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    #endregion
+
+    #region Tab: Faces
+
+    private void SelectFaceIndexFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog();
+        if (dialog.ShowDialog() == true && DataContext is MainViewModel vm)
+        {
+            vm.FaceIndexFolder = dialog.FolderName ?? string.Empty;
+            vm.Logger.Log($"📸 Папка для распознавания: {vm.FaceIndexFolder}", LogLevel.Info, "📸");
+        }
+    }
+
+    private async void StartFaceIndexing_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        if (string.IsNullOrWhiteSpace(vm.FaceIndexFolder) || !Directory.Exists(vm.FaceIndexFolder))
+        {
+            MessageBox.Show("Выберите существующую папку с фото.", "Лица", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var healthUrl = ResolveFaceApiHealthUrl();
+        if (!await IsFaceApiAvailableAsync(healthUrl))
+        {
+            vm.Logger.Log($"❌ Face API недоступен: {healthUrl}", LogLevel.Error, "❌");
+            MessageBox.Show($"Face API недоступен ({healthUrl}).\nЗапустите контейнер Docker и повторите.", "Лица", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var progressDialog = new ProgressDialog("Лица", "Запущена индексация лиц...");
+        progressDialog.Owner = this;
+
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+
+        void OnCancel(object? _, EventArgs __) => _cts?.Cancel();
+        progressDialog.CancelRequested += OnCancel;
+
+        var progress = new Progress<int>(percent =>
+        {
+            try { progressDialog.UpdateStatus($"Лица: {percent}%"); } catch { }
+        });
+
+        try
+        {
+            progressDialog.Show();
+            var pipeline = ServiceLocator.CreateFaceIndexingPipelineService(msg =>
+            {
+                if (!vm.FaceDetailedLogging && IsFaceDiagnosticLogMessage(msg))
+                    return;
+
+                vm.Logger.Log($"🤖 {msg}", LogLevel.Info, "🤖");
+            });
+            var thresholdSlider = this.FindName("ThresholdSlider") as Slider;
+            var threshold = thresholdSlider?.Value ?? 0.55;
+            
+            var result = await pipeline.RunAsync(new FaceIndexingOptions
+            {
+                SourceFolder = vm.FaceIndexFolder,
+                IsRecursive = vm.FaceIndexRecursive,
+                MinConfidence = vm.FaceMinConfidence,
+                BatchSize = vm.FaceBatchSize,
+                AutoAssignKnownPersons = true,
+                AutoAssignThreshold = threshold,
+                SkipAlreadyIndexedPhotos = !vm.FaceIndexRescan // ← Инвертируем: если Rescan=true, то Skip=false
+            }, progress, _cts.Token);
+
+            vm.Logger.Log($"✅ Индексация лиц завершена. Файлов: {result.ProcessedFiles}, лиц: {result.SavedFaces}", LogLevel.Info, "✅");
+            vm.Logger.Log($"📊 Сводка: с лицами={result.FilesWithAcceptedFaces}, без лиц={result.FilesWithoutAcceptedFaces}, автоназначено={result.AutoAssignedFaces}, unknown={result.UnknownFaces}", LogLevel.Info, "📊");
+            vm.Logger.Log($"📊 Служебно: пропущено без изменений={result.SkippedAlreadyIndexedPhotos}, переиндексировано из-за отсутствия лиц={result.ReindexedBecauseMissingFaces}", LogLevel.Info, "📊");
+
+            vm.FaceLastRunSummary =
+                $"Последний запуск: файлов {result.ProcessedFiles}, лиц {result.SavedFaces}, автоназначено {result.AutoAssignedFaces}, unknown {result.UnknownFaces}, фото с лицами {result.FilesWithAcceptedFaces}, без лиц {result.FilesWithoutAcceptedFaces}.";
+
+            foreach (var error in result.Errors.Take(20))
+                vm.Logger.Log($"❌ {error}", LogLevel.Error, "❌");
+
+            if (result.Errors.Count > 20)
+                vm.Logger.Log($"⚠️ Дополнительно ошибок: {result.Errors.Count - 20}", LogLevel.Warning, "⚠️");
+        }
+        catch (OperationCanceledException)
+        {
+            vm.Logger.Log("⚠️ Индексация лиц отменена.", LogLevel.Warning, "⚠️");
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Ошибка индексации лиц: {ex.Message}", LogLevel.Error, "❌");
+        }
+        finally
+        {
+            progressDialog.CancelRequested -= OnCancel;
+            progressDialog.Close();
+        }
+    }
+
+    private static string ResolveFaceApiHealthUrl()
+    {
+        var baseUrl = Environment.GetEnvironmentVariable("PHOTOSORTER_FACE_API_URL");
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            baseUrl = "http://localhost:5272";
+
+        if (!baseUrl.EndsWith("/", StringComparison.Ordinal))
+            baseUrl += "/";
+
+        return new Uri(new Uri(baseUrl), "health").ToString();
+    }
+
+    private static bool IsFaceDiagnosticLogMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return false;
+
+        return message.StartsWith("Hash:", StringComparison.Ordinal)
+               || message.StartsWith("Existing faces", StringComparison.Ordinal)
+               || message.StartsWith("Skip unchanged", StringComparison.Ordinal)
+               || message.StartsWith("Reindex required", StringComparison.Ordinal)
+               || message.StartsWith("Face API:", StringComparison.Ordinal)
+               || message.StartsWith("Face indexing done:", StringComparison.Ordinal)
+               || message.StartsWith("  ? Face #", StringComparison.Ordinal)
+               || message.StartsWith("  -> Face #", StringComparison.Ordinal)
+               || message.StartsWith("  ? Skip face", StringComparison.Ordinal)
+               || message.StartsWith("Face indexing failed:", StringComparison.Ordinal);
+    }
+
+    private static async Task<bool> IsFaceApiAvailableAsync(string healthUrl)
+    {
+        var urlsToTry = new List<string> { healthUrl };
+        if (healthUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+            urlsToTry.Add(healthUrl.Replace("localhost", "127.0.0.1", StringComparison.OrdinalIgnoreCase));
+
+        foreach (var url in urlsToTry.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                try
+                {
+                    using var http = new System.Net.Http.HttpClient
+                    {
+                        Timeout = TimeSpan.FromSeconds(5)
+                    };
+
+                    var response = await http.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
+                        return true;
+                }
+                catch
+                {
+                    // retry
+                }
+
+                await Task.Delay(400);
+            }
+        }
+
+        return false;
+    }
+
+    private void ManagePersons_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var window = new PersonsWindow(ServiceLocator.CreateFaceCatalogService(), ServiceLocator.CreateFacePersonManagementService())
+            {
+                Owner = this
+            };
+
+            window.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.Logger.Log($"❌ Ошибка окна персон: {ex.Message}", LogLevel.Error, "❌");
+
+            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void LabelUnknownFaces_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        try
+        {
+            var catalog = ServiceLocator.CreateFaceCatalogService();
+            var labeling = ServiceLocator.CreateFaceLabelingService();
+            var unknown = await catalog.GetUnknownFacesAsync(1000);
+
+            if (!string.IsNullOrWhiteSpace(vm.FaceIndexFolder))
+            {
+                unknown = unknown
+                    .Where(x => x.PhotoAsset?.FilePath is string p &&
+                                p.StartsWith(vm.FaceIndexFolder, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (unknown.Count == 0)
+            {
+                MessageBox.Show("Неизвестных лиц не найдено.", "Лица", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var thresholdSlider = this.FindName("ThresholdSlider") as Slider;
+            var threshold = thresholdSlider?.Value ?? 0.55;
+            var autoRecovered = await AutoAssignUnknownBeforeReviewAsync(catalog, unknown, threshold + 0.05);
+            if (autoRecovered > 0)
+            {
+                vm.Logger.Log($"🤖 Автодоназначено из неизвестных: {autoRecovered}", LogLevel.Info, "🤖");
+                unknown = await catalog.GetUnknownFacesAsync(1000);
+                if (!string.IsNullOrWhiteSpace(vm.FaceIndexFolder))
+                {
+                    unknown = unknown
+                        .Where(x => x.PhotoAsset?.FilePath is string p &&
+                                    p.StartsWith(vm.FaceIndexFolder, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+            }
+
+            if (unknown.Count == 0)
+            {
+                MessageBox.Show("После автопроверки неизвестных лиц не осталось.", "Лица", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var window = new UnknownFacesWindow(unknown, labeling, ServiceLocator.CreateFaceClusteringService(), ServiceLocator.GetFaceCatalogService())
+            {
+                Owner = this
+            };
+
+            window.ShowDialog();
+            vm.Logger.Log($"✅ Подтверждение завершено. Назначено лиц: {window.AssignedCount}", LogLevel.Info, "✅");
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Ошибка подтверждения лиц: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private static async Task<int> AutoAssignUnknownBeforeReviewAsync(IFaceCatalogService catalog, IReadOnlyList<DetectedFace> unknownFaces, double threshold)
+    {
+        var knownPersons = await catalog.GetPersonsAsync();
+        if (knownPersons.Count == 0 || unknownFaces.Count == 0)
+            return 0;
+
+        var knownFaces = await catalog.GetConfirmedFacesWithEmbeddingsAsync();
+        var centroids = BuildPersonCentroids(knownFaces);
+        if (centroids.Count == 0)
+            return 0;
+
+        var assigned = 0;
+        foreach (var face in unknownFaces)
+        {
+            var vectorBytes = face.FaceEmbedding?.Vector;
+            if (vectorBytes is not { Length: > 0 })
+                continue;
+
+            var vector = DecodeEmbedding(vectorBytes);
+            if (vector.Length == 0)
+                continue;
+
+            if (TryFindBestPerson(centroids, vector, threshold, out var personId, out _))
+            {
+                await catalog.AssignFaceToPersonAsync(face.Id, personId);
+                assigned++;
+            }
+        }
+
+        return assigned;
+    }
+
+    private static Dictionary<int, float[]> BuildPersonCentroids(IReadOnlyList<DetectedFace> knownFaces)
+    {
+        var byPerson = knownFaces
+            .Where(f => f.ConfirmedPersonId != null && f.FaceEmbedding?.Vector is { Length: > 0 })
+            .GroupBy(f => f.ConfirmedPersonId!.Value)
+            .ToDictionary(g => g.Key, g => g.Select(f => DecodeEmbedding(f.FaceEmbedding!.Vector)).Where(v => v.Length > 0).ToList());
+
+        var result = new Dictionary<int, float[]>();
+        foreach (var kv in byPerson)
+        {
+            if (kv.Value.Count == 0)
+                continue;
+
+            var dim = kv.Value.Max(v => v.Length);
+            var sum = new double[dim];
+            var count = 0;
+            foreach (var vec in kv.Value)
+            {
+                var len = Math.Min(dim, vec.Length);
+                for (var i = 0; i < len; i++)
+                    sum[i] += vec[i];
+                count++;
+            }
+
+            if (count == 0)
+                continue;
+
+            var centroid = new float[dim];
+            for (var i = 0; i < dim; i++)
+                centroid[i] = (float)(sum[i] / count);
+
+            NormalizeInPlace(centroid);
+            result[kv.Key] = centroid;
+        }
+
+        return result;
+    }
+
+    private static bool TryFindBestPerson(Dictionary<int, float[]> centroids, float[] candidate, double threshold, out int personId, out double distance)
+    {
+        personId = default;
+        distance = 1.0;
+
+        if (centroids.Count == 0 || candidate.Length == 0)
+            return false;
+
+        var normalized = candidate.ToArray();
+        NormalizeInPlace(normalized);
+
+        foreach (var kv in centroids)
+        {
+            var d = CosineDistance(kv.Value, normalized);
+            if (d < distance)
+            {
+                distance = d;
+                personId = kv.Key;
+            }
+        }
+
+        return distance <= threshold;
+    }
+
+    private static float[] DecodeEmbedding(byte[] bytes)
+    {
+        if (bytes.Length < sizeof(float) || bytes.Length % sizeof(float) != 0)
+            return [];
+
+        var values = new float[bytes.Length / sizeof(float)];
+        Buffer.BlockCopy(bytes, 0, values, 0, bytes.Length);
+        return values;
+    }
+
+    private static void NormalizeInPlace(float[] v)
+    {
+        double sum = 0;
+        for (var i = 0; i < v.Length; i++)
+            sum += v[i] * v[i];
+
+        var norm = Math.Sqrt(sum);
+        if (norm <= double.Epsilon)
+            return;
+
+        for (var i = 0; i < v.Length; i++)
+            v[i] = (float)(v[i] / norm);
+    }
+
+    private static double CosineDistance(float[] a, float[] b)
+    {
+        var len = Math.Min(a.Length, b.Length);
+        if (len == 0)
+            return 1.0;
+
+        double dot = 0;
+        double na = 0;
+        double nb = 0;
+
+        for (var i = 0; i < len; i++)
+        {
+            dot += a[i] * b[i];
+            na += a[i] * a[i];
+            nb += b[i] * b[i];
+        }
+
+        if (na <= double.Epsilon || nb <= double.Epsilon)
+            return 1.0;
+
+        var cosine = dot / (Math.Sqrt(na) * Math.Sqrt(nb));
+        return 1.0 - cosine;
     }
 
     #endregion
@@ -1032,6 +1421,83 @@ public partial class MainWindow : Window
             FileName = helpPath,
             UseShellExecute = true
         });
+    }
+
+    private void OpenWebGallery_Click(object sender, RoutedEventArgs e)
+    {
+        const string url = "http://localhost:5288";
+
+        try
+        {
+            if (_webServerProcess is { HasExited: false })
+            {
+                try
+                {
+                    _webServerProcess.Kill(true);
+                    _webServerProcess.Dispose();
+                }
+                catch
+                {
+                    // ignore restart cleanup errors
+                }
+
+                _webServerProcess = null;
+            }
+
+            var projectPath = FindWebProjectPath();
+            if (string.IsNullOrWhiteSpace(projectPath) || !File.Exists(projectPath))
+            {
+                MessageBox.Show("Не найден проект веб-галереи PhotoSorterApp.Web.", "Веб-альбомы", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"run --project \"{projectPath}\" --urls {url}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(projectPath) ?? AppContext.BaseDirectory
+            };
+
+            _webServerProcess = Process.Start(startInfo);
+            if (DataContext is MainViewModel vm)
+                vm.Logger.Log($"🌐 Запущен локальный веб-сервер: {url}", LogLevel.Info, "🌐");
+
+            Task.Delay(1200).ContinueWith(_ =>
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
+                catch
+                {
+                    // ignore browser launch errors from background continuation
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Не удалось открыть веб-галерею: {ex.Message}", "Веб-альбомы", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private static string? FindWebProjectPath()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        for (var i = 0; i < 8 && dir != null; i++)
+        {
+            var candidate = Path.Combine(dir.FullName, "PhotoSorterApp.Web", "PhotoSorterApp.Web.csproj");
+            if (File.Exists(candidate))
+                return candidate;
+            dir = dir.Parent;
+        }
+
+        return null;
     }
 
     #endregion
@@ -1139,6 +1605,14 @@ public partial class MainWindow : Window
         </ul>
     </div>
 
+    <div class='section'>
+        <h2>8. Вкладка «Лица»</h2>
+        <ul>
+            <li>Индексация лиц по папке с фото.</li>
+            <li>Назначение имён неизвестным лицам из каталога.</li>
+        </ul>
+    </div>
+
     <hr>
     <p><em>PhotoSorter v2.0</em></p>
 </body>
@@ -1165,7 +1639,7 @@ public partial class MainWindow : Window
                 if (selected.Length == 3 && selected.EndsWith(":\\"))
                 {
                     MessageBox.Show(
-                        "Нельзя выбирать корневой диск (C:\\, D:\\ и т.д.)!\n" +
+                        "Нельзя выбирать корневой диск (C:\\, D:\\ и т.d.)!\n" +
                         "Выберите конкретную папку.",
                         "Ошибка",
                         MessageBoxButton.OK,
@@ -1181,4 +1655,81 @@ public partial class MainWindow : Window
     }
 
     #endregion
+
+    #region Database Diagnostics
+
+    private async void ResetDatabase_Click(object sender, RoutedEventArgs e)
+    {
+        var result = MessageBox.Show(
+            "⚠️ ВНИМАНИЕ: Это ПОЛНОСТЬЮ очистит БД индексированных фото и лиц.\n\n" +
+            "После очистки вам нужно будет заново запустить индексацию.\n\n" +
+            "Вы уверены?",
+            "Подтверждение очистки БД",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null) return;
+
+            vm.Logger.Log("🧹 Начало очистки БД...", LogLevel.Info, "🧹");
+
+            var catalogService = ServiceLocator.CreateFaceCatalogService();
+            var resetService = new FaceDatabaseResetService(catalogService);
+            var resetResult = await resetService.ResetAllAsync();
+
+            if (resetResult.Success)
+            {
+                vm.Logger.Log($"✅ Статистика:", LogLevel.Info, "📊");
+                vm.Logger.Log($"   До: {resetResult.PhotosBefore} фото, {resetResult.FacesBefore} лиц, {resetResult.PersonsBefore} персон, {resetResult.TagsBefore} тегов", LogLevel.Info, "📊");
+                vm.Logger.Log($"{resetResult.Message}", LogLevel.Info, "✅");
+                MessageBox.Show(resetResult.Message, "БД очищена", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                vm.Logger.Log($"❌ {resetResult.Message}", LogLevel.Error, "❌");
+                MessageBox.Show(resetResult.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            var vm = DataContext as MainViewModel;
+            vm?.Logger.Log($"❌ Ошибка: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show($"Ошибка очистки: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    #endregion
+
+    private async void ResetFaceCatalog_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm)
+            return;
+
+        var confirm = MessageBox.Show(
+            "Полностью очистить базу лиц?\nБудут удалены все персоны, лица и подтверждения.",
+            "Очистка базы лиц",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            var catalog = ServiceLocator.CreateFaceCatalogService();
+            await catalog.ResetCatalogAsync();
+            vm.Logger.Log("🧹 База лиц очищена.", LogLevel.Warning, "🧹");
+            MessageBox.Show("База лиц очищена. Выполните индексацию заново.", "Лица", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            vm.Logger.Log($"❌ Ошибка очистки базы лиц: {ex.Message}", LogLevel.Error, "❌");
+            MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 }

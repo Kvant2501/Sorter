@@ -1,0 +1,8 @@
+services:
+  face-api:
+    build:
+      context: ./ai-face-service
+    container_name: photosorter-face-api
+    ports:
+      - "5272:8000"
+    restart: unless-stopped

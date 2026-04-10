@@ -172,6 +172,56 @@ public class MainViewModel : INotifyPropertyChanged
         set { if (value) SelectedProfile = FileTypeProfile.PhotosAndVideos; }
     }
 
+    // === Face Recognition ===
+    private string? _faceIndexFolder;
+    public string? FaceIndexFolder
+    {
+        get => _faceIndexFolder;
+        set { _faceIndexFolder = value; OnPropertyChanged(); }
+    }
+
+    private bool _faceIndexRecursive = true;
+    public bool FaceIndexRecursive
+    {
+        get => _faceIndexRecursive;
+        set { _faceIndexRecursive = value; OnPropertyChanged(); }
+    }
+
+    private bool _faceIndexRescan = false;
+    public bool FaceIndexRescan
+    {
+        get => _faceIndexRescan;
+        set { _faceIndexRescan = value; OnPropertyChanged(); }
+    }
+
+    private double _faceMinConfidence = 0.45;
+    public double FaceMinConfidence
+    {
+        get => _faceMinConfidence;
+        set { _faceMinConfidence = value; OnPropertyChanged(); }
+    }
+
+    private int _faceBatchSize = 1;
+    public int FaceBatchSize
+    {
+        get => _faceBatchSize;
+        set { _faceBatchSize = value; OnPropertyChanged(); }
+    }
+
+    private bool _faceDetailedLogging;
+    public bool FaceDetailedLogging
+    {
+        get => _faceDetailedLogging;
+        set { _faceDetailedLogging = value; OnPropertyChanged(); }
+    }
+
+    private string _faceLastRunSummary = "Сводка последнего запуска появится после индексации.";
+    public string FaceLastRunSummary
+    {
+        get => _faceLastRunSummary;
+        set { _faceLastRunSummary = value; OnPropertyChanged(); }
+    }
+
     // === Catalog ===
     private string? _catalogFolder;
     public string? CatalogFolder

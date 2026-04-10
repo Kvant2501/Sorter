@@ -78,6 +78,16 @@
     <!-- Implicit default Button style uses PrimaryButton -->
     <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
 
+    <!-- Danger/destructive action button -->
+    <Style TargetType="Button" x:Key="DangerButton" BasedOn="{StaticResource AnimatedButtonBase}">
+        <Setter Property="Background" Value="#C0392B"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="BorderBrush" Value="#A93226"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="MinHeight" Value="36"/>
+    </Style>
+
     <!-- Card base style -->
     <Style x:Key="BaseCard" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>

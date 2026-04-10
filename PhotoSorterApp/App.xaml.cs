@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Media;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using PhotoSorterApp.Services;
 
 namespace PhotoSorterApp;
 
@@ -17,6 +18,15 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        try
+        {
+            FaceCatalogDatabase.EnsureCreated();
+        }
+        catch
+        {
+            // ignore DB bootstrap errors at startup
+        }
+
         try
         {
             var theme = "Light";

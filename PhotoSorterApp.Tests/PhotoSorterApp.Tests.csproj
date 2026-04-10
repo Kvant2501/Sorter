@@ -13,9 +13,11 @@
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.4.1" />
     <PackageReference Include="NUnit.Analyzers" Version="3.11.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PhotoSorterApp\PhotoSorterApp.csproj" />
+    <ProjectReference Include="..\PhotoSorterApp.Web\PhotoSorterApp.Web.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PersonsWindow_Title" xml:space="preserve">
+    <value>Персоны</value>
+  </data>
+  <data name="PersonsWindow_HeaderDescription" xml:space="preserve">
+    <value>Выберите персону слева, чтобы увидеть её фотографии. Можно переименовать, объединить или удалить персону.</value>
+  </data>
+  <data name="PersonsWindow_EmptySelectionHint" xml:space="preserve">
+    <value>Управление лицами персоны</value>
+  </data>
+  <data name="PersonsWindow_ButtonBack" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="PersonsWindow_ButtonForward" xml:space="preserve">
+    <value>Вперёд</value>
+  </data>
+  <data name="PersonsWindow_DeleteFaceMenuItem" xml:space="preserve">
+    <value>Удалить это лицо</value>
+  </data>
+  <data name="PersonsWindow_ButtonRefresh" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="PersonsWindow_ButtonRename" xml:space="preserve">
+    <value>Переименовать</value>
+  </data>
+  <data name="PersonsWindow_ButtonMerge" xml:space="preserve">
+    <value>Объединить с...</value>
+  </data>
+  <data name="PersonsWindow_ButtonDeleteMarkedFaces" xml:space="preserve">
+    <value>Удалить отмеченные лица</value>
+  </data>
+  <data name="PersonsWindow_ButtonDelete" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="PersonsWindow_ButtonClose" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="PersonsWindow_SortByNameAsc" xml:space="preserve">
+    <value>По имени (А-Я)</value>
+  </data>
+  <data name="PersonsWindow_SortByNameDesc" xml:space="preserve">
+    <value>По имени (Я-А)</value>
+  </data>
+  <data name="PersonsWindow_SortByFaceCountAsc" xml:space="preserve">
+    <value>По числу лиц (возр.)</value>
+  </data>
+  <data name="PersonsWindow_SortByFaceCountDesc" xml:space="preserve">
+    <value>По числу лиц (убыв.)</value>
+  </data>
+  <data name="PersonsWindow_PageStatusFormat" xml:space="preserve">
+    <value>Стр. {0}/{1}</value>
+  </data>
+  <data name="PersonsWindow_LoadingFaces" xml:space="preserve">
+    <value>Загрузка лиц...</value>
+  </data>
+  <data name="PersonsWindow_LoadingFacesProgress" xml:space="preserve">
+    <value>Загрузка лиц: {0}/{1}</value>
+  </data>
+  <data name="PersonsWindow_SelectPersonMessage" xml:space="preserve">
+    <value>Сначала выберите персону.</value>
+  </data>
+  <data name="PersonsWindow_SelectSourcePersonMessage" xml:space="preserve">
+    <value>Сначала выберите персону-источник.</value>
+  </data>
+  <data name="PersonsWindow_InfoTitle" xml:space="preserve">
+    <value>Персоны</value>
+  </data>
+  <data name="PersonsWindow_RenameDialogTitle" xml:space="preserve">
+    <value>Новое имя</value>
+  </data>
+  <data name="PersonsWindow_MergeDialogPrompt" xml:space="preserve">
+    <value>Объединить «{0}» с:</value>
+  </data>
+  <data name="PersonsWindow_DeletePersonConfirm" xml:space="preserve">
+    <value>Удалить персону «{0}»? Все её лица станут неразмеченными.</value>
+  </data>
+  <data name="PersonsWindow_DeleteConfirmTitle" xml:space="preserve">
+    <value>Подтверждение</value>
+  </data>
+  <data name="PersonsWindow_SelectMarkedFacesMessage" xml:space="preserve">
+    <value>Сначала отметьте лица для удаления.</value>
+  </data>
+  <data name="PersonsWindow_DeleteMarkedFacesConfirm" xml:space="preserve">
+    <value>Удалить отмеченные лица: {0}?</value>
+  </data>
+  <data name="PersonsWindow_DeleteFacesConfirmTitle" xml:space="preserve">
+    <value>Удаление лиц</value>
+  </data>
+  <data name="PersonsWindow_DeleteSingleFaceConfirm" xml:space="preserve">
+    <value>Удалить это лицо из базы? ({0})</value>
+  </data>
+  <data name="PersonsWindow_DeleteFaceConfirmTitle" xml:space="preserve">
+    <value>Удаление лица</value>
+  </data>
+  <!-- UnknownFacesWindow strings -->
+  <data name="UnknownFacesWindow_Title" xml:space="preserve">
+    <value>Неизвестные лица</value>
+  </data>
+  <data name="UnknownFacesWindow_HeaderDescription" xml:space="preserve">
+    <value>Лица сгруппированы по кластерам. Выберите одно или несколько фото и назначьте имя. Назначение имени применяется ко всем лицам в выбранных кластерах. Наведите на фото, чтобы увидеть имя файла.</value>
+  </data>
+  <data name="UnknownFacesWindow_Loading" xml:space="preserve">
+    <value>Загрузка превью...</value>
+  </data>
+  <data name="UnknownFacesWindow_FoundSuffix" xml:space="preserve">
+    <value>найдено</value>
+  </data>
+  <data name="UnknownFacesWindow_ClearSelection" xml:space="preserve">
+    <value>Снять выделение</value>
+  </data>
+  <data name="UnknownFacesWindow_MoveToCluster" xml:space="preserve">
+    <value>Переместить в кластер</value>
+  </data>
+  <data name="UnknownFacesWindow_DeleteSelected" xml:space="preserve">
+    <value>Удалить выбранные</value>
+  </data>
+  <data name="UnknownFacesWindow_AssignNameToClusters" xml:space="preserve">
+    <value>Назначить имя кластерам</value>
+  </data>
+  <data name="UnknownFacesWindow_Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="UnknownFacesWindow_AssignTooltip" xml:space="preserve">
+    <value>Назначает имя всем лицам в кластерах, где есть выбранные фото</value>
+  </data>
+
+</root>
